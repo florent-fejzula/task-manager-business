@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { updateDoc } from "firebase/firestore";
+import { useAuth } from "../context/AuthContext";
 
 function TaskMetaControls({ task, taskRef, onUpdate }) {
+  const { userData } = useAuth();
+  const isManager = userData?.role === "manager";
+
   const [timeLeft, setTimeLeft] = useState(null);
 
   useEffect(() => {
@@ -95,12 +99,16 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
 
       <div className="flex items-center gap-3">
         <label className="text-sm font-medium">Set Timer:</label>
+
         <select
           onChange={(e) => {
             const val = parseInt(e.target.value);
-            if (val) handleSetTimer(val);
+            if (val && isManager) handleSetTimer(val);
           }}
-          className="border border-gray-300 rounded px-2 py-1 text-sm"
+          className={`border rounded px-2 py-1 text-sm ${
+            isManager ? "border-gray-300" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+          }`}
+          disabled={!isManager}
           defaultValue=""
         >
           <option value="">-- Choose --</option>
@@ -111,7 +119,8 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
           <option value="18000000">5 hours</option>
           <option value="28800000">8 hours</option>
         </select>
-        {task.timerStart && task.timerDuration && (
+
+        {task.timerStart && task.timerDuration && isManager && (
           <button
             onClick={handleCancelTimer}
             className="text-xs text-red-600 underline"

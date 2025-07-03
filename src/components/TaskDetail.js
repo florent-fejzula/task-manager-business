@@ -12,12 +12,13 @@ import DeleteConfirmModal from "./DeleteConfirmModal";
 function TaskDetail({ collapseSubtasks = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { currentUser, userData } = useAuth();
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
-  const taskRef = doc(db, "users", currentUser.uid, "tasks", id);
+  const taskRef = doc(db, "tasks", id);
+  const isManager = userData?.role === "manager";
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -61,7 +62,11 @@ function TaskDetail({ collapseSubtasks = false }) {
       </div>
 
       <TaskHeader task={task} taskRef={taskRef} onUpdate={handleUpdateTask} />
-      <TaskMetaControls task={task} taskRef={taskRef} onUpdate={handleUpdateTask} />
+      <TaskMetaControls
+        task={task}
+        taskRef={taskRef}
+        onUpdate={handleUpdateTask}
+      />
       <SubtaskList
         task={task}
         taskRef={taskRef}
@@ -69,14 +74,16 @@ function TaskDetail({ collapseSubtasks = false }) {
         collapseSubtasks={collapseSubtasks}
       />
 
-      <button
-        onClick={() => setShowConfirmDelete(true)}
-        className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 w-full"
-      >
-        Delete Task
-      </button>
+      {isManager && (
+        <button
+          onClick={() => setShowConfirmDelete(true)}
+          className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 w-full"
+        >
+          Delete Task
+        </button>
+      )}
 
-      {showConfirmDelete && (
+      {showConfirmDelete && isManager && (
         <DeleteConfirmModal
           onCancel={() => setShowConfirmDelete(false)}
           onConfirm={handleDeleteTask}

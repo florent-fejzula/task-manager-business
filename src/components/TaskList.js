@@ -8,6 +8,7 @@ import {
   serverTimestamp,
   doc,
   getDoc,
+  where,
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -16,12 +17,14 @@ import TaskCard from "./TaskCard";
 import AddTaskForm from "./AddTaskForm";
 
 function TaskList({ triggerFetch }) {
-  const { currentUser } = useAuth();
+  const { currentUser, userData } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showClosed, setShowClosed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userSettings, setUserSettings] = useState({});
+  const [userList, setUserList] = useState([]);
+  const userMap = Object.fromEntries(userList.map((u) => [u.uid, u.name]));
 
   const grouped = {
     todo: [],
@@ -41,18 +44,24 @@ function TaskList({ triggerFetch }) {
     grouped[task.status]?.push(task);
   });
 
-  const handleAddTask = async (newTaskTitle, newTaskStatus) => {
+  const handleAddTask = async (
+    newTaskTitle,
+    newTaskStatus,
+    assignedTo,
+    comment
+  ) => {
     try {
-      const docRef = await addDoc(
-        collection(db, "users", currentUser.uid, "tasks"),
-        {
-          title: newTaskTitle,
-          status: newTaskStatus,
-          priority: "medium",
-          createdAt: serverTimestamp(),
-          subTasks: [],
-        }
-      );
+      const docRef = await addDoc(collection(db, "tasks"), {
+        title: newTaskTitle,
+        status: newTaskStatus,
+        priority: "medium",
+        createdAt: serverTimestamp(),
+        subTasks: [],
+        assignedTo: assignedTo || currentUser.uid,
+        createdBy: currentUser.uid,
+        comment: comment || "", // add comment field here
+      });
+
       setTasks((prev) => [
         {
           id: docRef.id,
@@ -60,7 +69,10 @@ function TaskList({ triggerFetch }) {
           status: newTaskStatus,
           priority: "medium",
           subTasks: [],
+          assignedTo: assignedTo || currentUser.uid,
+          createdBy: currentUser.uid,
           createdAt: new Date(),
+          comment: comment || "", // add to local state too
         },
         ...prev,
       ]);
@@ -73,15 +85,24 @@ function TaskList({ triggerFetch }) {
   const sortedStatuses = ["in-progress", "todo", "on-hold", "done"];
 
   useEffect(() => {
+    console.log("👤 userData in TaskList:", userData);
     const fetchTasksAndSettings = async () => {
       try {
         setLoading(true);
 
-        // 🔹 Fetch tasks
-        const q = query(
-          collection(db, "users", currentUser.uid, "tasks"),
-          orderBy("createdAt", "desc")
-        );
+        let q;
+        const tasksRef = collection(db, "tasks");
+
+        if (userData?.role === "manager") {
+          q = query(tasksRef, orderBy("createdAt", "desc"));
+        } else {
+          q = query(
+            tasksRef,
+            where("assignedTo", "==", currentUser.uid)
+            // orderBy("createdAt", "desc")
+          );
+        }
+
         const snapshot = await getDocs(q);
         const tasksData = snapshot.docs.map((doc) => ({
           id: doc.id,
@@ -89,13 +110,29 @@ function TaskList({ triggerFetch }) {
         }));
         setTasks(tasksData);
 
-        // 🔹 Fetch settings
-        const settingsRef = doc(db, "users", currentUser.uid, "settings", "preferences");
+        // Fetch user settings
+        const settingsRef = doc(
+          db,
+          "users",
+          currentUser.uid,
+          "settings",
+          "preferences"
+        );
         const settingsSnap = await getDoc(settingsRef);
         if (settingsSnap.exists()) {
           setUserSettings(settingsSnap.data());
         } else {
           setUserSettings({});
+        }
+
+        // Fetch all users (for assignment dropdown)
+        if (userData?.role === "manager") {
+          const usersSnap = await getDocs(collection(db, "users"));
+          const users = usersSnap.docs.map((doc) => ({
+            uid: doc.id,
+            ...doc.data(),
+          }));
+          setUserList(users);
         }
 
         setLoading(false);
@@ -105,8 +142,10 @@ function TaskList({ triggerFetch }) {
       }
     };
 
-    if (currentUser?.uid) fetchTasksAndSettings();
-  }, [triggerFetch, currentUser?.uid]);
+    if (currentUser?.uid && userData?.role) {
+      fetchTasksAndSettings();
+    }
+  }, [triggerFetch, currentUser?.uid, userData?.role]);
 
   if (loading) {
     return (
@@ -127,7 +166,13 @@ function TaskList({ triggerFetch }) {
             + Add New Task
           </button>
         )}
-        {showAddTask && <AddTaskForm onAdd={handleAddTask} />}
+        {showAddTask && (
+          <AddTaskForm
+            onAdd={handleAddTask}
+            users={userList}
+            userData={userData}
+          />
+        )}
       </div>
 
       {sortedStatuses.map((taskStatus) => {
@@ -138,7 +183,8 @@ function TaskList({ triggerFetch }) {
           const getWeight = (priority) =>
             priority === "high" ? 0 : priority === "medium" ? 1 : 2;
           return (
-            getWeight(a.priority || "medium") - getWeight(b.priority || "medium")
+            getWeight(a.priority || "medium") -
+            getWeight(b.priority || "medium")
           );
         });
 
@@ -171,6 +217,8 @@ function TaskList({ triggerFetch }) {
                     key={task.id}
                     task={task}
                     currentUser={currentUser}
+                    userData={userData}
+                    userMap={userMap}
                     collapseSubtasks={userSettings?.collapseCompletedSubtasks}
                     onStatusChange={(taskId, newStatus) =>
                       setTasks((prev) =>

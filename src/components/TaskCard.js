@@ -3,7 +3,14 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { Link } from "react-router-dom";
 
-function TaskCard({ task, currentUser, onStatusChange, onSubTaskUpdate, collapseSubtasks }) {
+function TaskCard({
+  task,
+  userData,
+  userMap,
+  onStatusChange,
+  onSubTaskUpdate,
+  collapseSubtasks,
+}) {
   const [showDoneSubTasks, setShowDoneSubTasks] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
 
@@ -19,7 +26,8 @@ function TaskCard({ task, currentUser, onStatusChange, onSubTaskUpdate, collapse
       return;
     }
 
-    const start = task.timerStart.toMillis?.() || new Date(task.timerStart).getTime();
+    const start =
+      task.timerStart.toMillis?.() || new Date(task.timerStart).getTime();
     const duration = task.timerDuration;
     const updateRemainingTime = () => {
       const now = Date.now();
@@ -43,7 +51,7 @@ function TaskCard({ task, currentUser, onStatusChange, onSubTaskUpdate, collapse
   const handleStatusChange = async (e) => {
     const newStatus = e.target.value;
     try {
-      const taskRef = doc(db, "users", currentUser.uid, "tasks", task.id);
+      const taskRef = doc(db, "tasks", task.id);
       await updateDoc(taskRef, { status: newStatus });
       onStatusChange(task.id, newStatus);
     } catch (err) {
@@ -65,7 +73,7 @@ function TaskCard({ task, currentUser, onStatusChange, onSubTaskUpdate, collapse
       sub.inProgress = false;
     }
 
-    await updateDoc(doc(db, "users", currentUser.uid, "tasks", task.id), {
+    await updateDoc(doc(db, "tasks", task.id), {
       subTasks: updated,
     });
     onSubTaskUpdate(task.id, updated);
@@ -74,7 +82,7 @@ function TaskCard({ task, currentUser, onStatusChange, onSubTaskUpdate, collapse
   const handleDeleteSubTask = async (index) => {
     const updated = [...(task.subTasks || [])];
     updated.splice(index, 1);
-    await updateDoc(doc(db, "users", currentUser.uid, "tasks", task.id), {
+    await updateDoc(doc(db, "tasks", task.id), {
       subTasks: updated,
     });
     onSubTaskUpdate(task.id, updated);
@@ -85,8 +93,11 @@ function TaskCard({ task, currentUser, onStatusChange, onSubTaskUpdate, collapse
     const input = e.target.elements[`sub-${task.id}`];
     const title = input.value.trim();
     if (!title) return;
-    const updated = [...(task.subTasks || []), { title, done: false, inProgress: false }];
-    await updateDoc(doc(db, "users", currentUser.uid, "tasks", task.id), {
+    const updated = [
+      ...(task.subTasks || []),
+      { title, done: false, inProgress: false },
+    ];
+    await updateDoc(doc(db, "tasks", task.id), {
       subTasks: updated,
     });
     onSubTaskUpdate(task.id, updated);
@@ -119,6 +130,17 @@ function TaskCard({ task, currentUser, onStatusChange, onSubTaskUpdate, collapse
         </select>
       </div>
 
+      {userData?.role === "manager" && (
+        <p className="text-sm italic text-gray-500 ml-1 mt-1">
+          ({userMap?.[task.assignedTo] || "Unknown"})
+        </p>
+      )}
+
+      {/* Comment */}
+      {task.comment && (
+        <p className="text-sm text-gray-700 mb-3 ml-1">• {task.comment}</p>
+      )}
+
       {/* Timer display */}
       {timeLeft && (
         <div className="text-sm text-orange-600 mb-2 font-medium italic">
@@ -131,14 +153,21 @@ function TaskCard({ task, currentUser, onStatusChange, onSubTaskUpdate, collapse
         <ul className="space-y-1">
           {task.subTasks.map((sub, index) =>
             !sub.done ? (
-              <li key={index} className="flex items-center justify-between text-sm">
+              <li
+                key={index}
+                className="flex items-center justify-between text-sm"
+              >
                 <label className="flex items-center gap-2 flex-grow cursor-pointer">
                   <input
                     type="checkbox"
                     checked={sub.done}
                     onChange={() => handleToggleSubTask(index)}
                   />
-                  <span className={sub.inProgress ? "text-blue-600 italic" : "text-primary"}>
+                  <span
+                    className={
+                      sub.inProgress ? "text-blue-600 italic" : "text-primary"
+                    }
+                  >
                     {sub.title}
                   </span>
                 </label>
@@ -158,7 +187,8 @@ function TaskCard({ task, currentUser, onStatusChange, onSubTaskUpdate, collapse
               onClick={() => setShowDoneSubTasks(!showDoneSubTasks)}
             >
               <span className="text-sm font-medium italic text-gray-700 font-serif tracking-wide">
-                Completed Subtasks ({task.subTasks.filter((s) => s.done).length})
+                Completed Subtasks ({task.subTasks.filter((s) => s.done).length}
+                )
               </span>
               <svg
                 className={`w-4 h-4 text-gray-400 transform transition-transform duration-200 ${
@@ -168,7 +198,12 @@ function TaskCard({ task, currentUser, onStatusChange, onSubTaskUpdate, collapse
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </li>
           )}
@@ -176,14 +211,19 @@ function TaskCard({ task, currentUser, onStatusChange, onSubTaskUpdate, collapse
           {showDoneSubTasks &&
             task.subTasks.map((sub, index) =>
               sub.done ? (
-                <li key={index} className="flex items-center justify-between text-sm">
+                <li
+                  key={index}
+                  className="flex items-center justify-between text-sm"
+                >
                   <label className="flex items-center gap-2 flex-grow">
                     <input
                       type="checkbox"
                       checked={sub.done}
                       onChange={() => handleToggleSubTask(index)}
                     />
-                    <span className="line-through text-gray-400">{sub.title}</span>
+                    <span className="line-through text-gray-400">
+                      {sub.title}
+                    </span>
                   </label>
                   <button
                     onClick={() => handleDeleteSubTask(index)}
@@ -197,7 +237,10 @@ function TaskCard({ task, currentUser, onStatusChange, onSubTaskUpdate, collapse
         </ul>
       )}
 
-      <form onSubmit={handleAddSubTask} className="mt-3 flex items-center gap-2">
+      <form
+        onSubmit={handleAddSubTask}
+        className="mt-3 flex items-center gap-2"
+      >
         <input
           type="text"
           name={`sub-${task.id}`}

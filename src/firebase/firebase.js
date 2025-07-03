@@ -6,12 +6,12 @@ import { getMessaging } from "firebase/messaging";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBKrcqWPUsIYlqnJRz3QnvBVhRKbgN4StE",
-  authDomain: "task-manager-3cc13.firebaseapp.com",
-  projectId: "task-manager-3cc13",
-  storageBucket: "task-manager-3cc13.firebasestorage.app",
-  messagingSenderId: "839409395329",
-  appId: "1:839409395329:web:5ca643850ab9c6edbbcf80"
+  apiKey: "AIzaSyBgVhtsbi_jAtcehmXSK5xUccQYKv8Qy_o",
+  authDomain: "task-manager-business.firebaseapp.com",
+  projectId: "task-manager-business",
+  storageBucket: "task-manager-business.firebasestorage.app",
+  messagingSenderId: "427957473188",
+  appId: "1:427957473188:web:a8f7da85df7e3265dd3b31"
 };
 
 // Initialize Firebase
