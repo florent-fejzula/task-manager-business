@@ -82,7 +82,7 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
           ⏳ {formatTimeLeft(timeLeft)} left
         </div>
       )}
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4">
         <select
           value={task.status}
           onChange={handleStatusChange}

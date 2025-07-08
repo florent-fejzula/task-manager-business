@@ -85,7 +85,6 @@ function TaskList({ triggerFetch, filterToMyTasks = false }) {
   const sortedStatuses = ["in-progress", "todo", "on-hold", "done"];
 
   useEffect(() => {
-    console.log("👤 userData in TaskList:", userData);
     const fetchTasksAndSettings = async () => {
       try {
         setLoading(true);
