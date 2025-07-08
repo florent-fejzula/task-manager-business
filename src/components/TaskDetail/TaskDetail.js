@@ -2,12 +2,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../firebase/firebase";
-import { useAuth } from "../context/AuthContext";
+import { db } from "../../firebase/firebase";
+import { useAuth } from "../../context/AuthContext";
 import TaskHeader from "./TaskHeader";
-import TaskMetaControls from "./TaskMetaControls";
-import SubtaskList from "./SubtaskList";
+import SubtaskList from "../SubtaskList";
 import DeleteConfirmModal from "./DeleteConfirmModal";
+import TaskControls from "./TaskControls";
 
 function TaskDetail({ collapseSubtasks = false }) {
   const { id } = useParams();
@@ -62,7 +62,7 @@ function TaskDetail({ collapseSubtasks = false }) {
       </div>
 
       <TaskHeader task={task} taskRef={taskRef} onUpdate={handleUpdateTask} />
-      <TaskMetaControls
+      <TaskControls
         task={task}
         taskRef={taskRef}
         onUpdate={handleUpdateTask}

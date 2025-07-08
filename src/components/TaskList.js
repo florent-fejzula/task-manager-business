@@ -145,7 +145,7 @@ function TaskList({ triggerFetch }) {
     if (currentUser?.uid && userData?.role) {
       fetchTasksAndSettings();
     }
-  }, [triggerFetch, currentUser?.uid, userData?.role]);
+  }, [triggerFetch, currentUser?.uid, userData]);
 
   if (loading) {
     return (

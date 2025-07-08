@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { updateDoc } from "firebase/firestore";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 function TaskMetaControls({ task, taskRef, onUpdate }) {
   const { userData } = useAuth();

@@ -15,12 +15,12 @@ import { useAuth } from "./context/AuthContext";
 // import { requestNotificationPermission } from "./firebase/requestPermission";
 
 import TaskList from "./components/TaskList";
-import TaskDetail from "./components/TaskDetail";
+import TaskDetail from "./components/TaskDetail/TaskDetail";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import Settings from "./pages/Settings";
-import Logout from "./components/Logout";
+import Logout from "./pages/Logout";
 
 function TaskDetailWithSettings({ userId }) {
   const [settings, setSettings] = useState(null);
