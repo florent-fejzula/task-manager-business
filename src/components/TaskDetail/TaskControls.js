@@ -14,7 +14,8 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
       return;
     }
 
-    const start = task.timerStart.toMillis?.() || new Date(task.timerStart).getTime();
+    const start =
+      task.timerStart.toMillis?.() || new Date(task.timerStart).getTime();
     const duration = task.timerDuration;
 
     const updateRemaining = () => {
@@ -30,9 +31,17 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
 
   const formatTimeLeft = (ms) => {
     const totalMins = Math.floor(ms / 60000);
-    const hrs = Math.floor(totalMins / 60);
+    const days = Math.floor(totalMins / 1440); // 1440 mins in a day
+    const hrs = Math.floor((totalMins % 1440) / 60);
     const mins = totalMins % 60;
-    return `${hrs > 0 ? `${hrs}:` : ""}${mins.toString().padStart(2, "0")}`;
+
+    if (days > 0) {
+      return `${days}d ${hrs}h`;
+    } else if (hrs > 0) {
+      return `${hrs}h ${mins.toString().padStart(2, "0")}m`;
+    } else {
+      return `${mins}m`;
+    }
   };
 
   const handleStatusChange = async (e) => {
@@ -68,6 +77,11 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
 
   return (
     <div className="flex flex-col gap-4 mb-6">
+      {timeLeft && (
+        <div className="text-sm text-orange-600 font-medium italic">
+          ⏳ {formatTimeLeft(timeLeft)} left
+        </div>
+      )}
       <div className="flex gap-4">
         <select
           value={task.status}
@@ -90,30 +104,29 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
           <option value="low">Low Priority</option>
         </select>
 
-      {timeLeft && (
-        <div className="text-sm text-orange-600 font-medium italic">
-          ⏳ {formatTimeLeft(timeLeft)} left
-        </div>
-      )}
-
         <select
           onChange={(e) => {
             const val = parseInt(e.target.value);
             if (val && isManager) handleSetTimer(val);
           }}
           className={`border rounded px-2 py-1 text-sm ${
-            isManager ? "border-gray-300" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            isManager
+              ? "border-gray-300"
+              : "bg-gray-100 text-gray-400 cursor-not-allowed"
           }`}
           disabled={!isManager}
           defaultValue=""
         >
           <option value="">-- No Timer --</option>
-          <option value="1020000">17 min (test)</option>
           <option value="1800000">30 min</option>
           <option value="3600000">1 hour</option>
           <option value="7200000">2 hours</option>
           <option value="18000000">5 hours</option>
           <option value="28800000">8 hours</option>
+          <option value="86400000">1 day</option>
+          <option value="172800000">2 days</option>
+          <option value="259200000">3 days</option>
+          <option value="432000000">5 days</option>
         </select>
 
         {task.timerStart && task.timerDuration && isManager && (

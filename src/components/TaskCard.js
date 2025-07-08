@@ -43,9 +43,17 @@ function TaskCard({
 
   const formatTimeLeft = (ms) => {
     const totalMins = Math.floor(ms / 60000);
-    const hours = Math.floor(totalMins / 60);
+    const days = Math.floor(totalMins / 1440); // 1440 mins in a day
+    const hrs = Math.floor((totalMins % 1440) / 60);
     const mins = totalMins % 60;
-    return `${hours > 0 ? `${hours}:` : ""}${mins.toString().padStart(2, "0")}`;
+
+    if (days > 0) {
+      return `${days}d ${hrs}h`;
+    } else if (hrs > 0) {
+      return `${hrs}h ${mins.toString().padStart(2, "0")}m`;
+    } else {
+      return `${mins}m`;
+    }
   };
 
   const handleStatusChange = async (e) => {
