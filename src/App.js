@@ -14,6 +14,7 @@ import { db } from "./firebase/firebase";
 import { useAuth } from "./context/AuthContext";
 // import { requestNotificationPermission } from "./firebase/requestPermission";
 
+import SideMenu from "./pages/sideMenu";
 import TaskList from "./components/TaskList";
 import TaskDetail from "./components/TaskDetail/TaskDetail";
 import SignUp from "./pages/SignUp";
@@ -74,6 +75,7 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-soft text-primary font-sans px-4 py-8 sm:py-12">
+        <SideMenu />
         <div className="max-w-2xl mx-auto">
           <Routes>
             <Route
@@ -81,15 +83,15 @@ function App() {
               element={
                 currentUser ? (
                   <>
-                    <header className="mb-10 text-center">
+                    <header className="mb-6 text-center">
                       <h1 className="text-4xl font-bold tracking-tight mb-3 sm:mb-2">
-                        Task Manager B1
+                        Task Manager B1.1
                       </h1>
                       <div className="w-16 h-1 mx-auto bg-accent rounded"></div>
                       <p className="mt-2 text-sm text-gray-500">
                         Stay on top of your goals, one task at a time.
                       </p>
-                      <div className="text-right mt-4 flex justify-end items-center gap-4">
+                      <div className="text-right mt-4 flex items-center gap-4">
                         {userData?.role === "manager" && (
                           <Link
                             to="/my-tasks"
@@ -98,17 +100,10 @@ function App() {
                             My Tasks
                           </Link>
                         )}
-                        <Link
-                          to="/settings"
-                          className="text-sm text-blue-600 hover:underline"
-                        >
-                          ⚙️ Settings
-                        </Link>
-                        <Logout />
                       </div>
                     </header>
 
-                    <div className="mt-10">
+                    <div>
                       <TaskList
                         triggerFetch={triggerFetch}
                         setTriggerFetch={setTriggerFetch}
