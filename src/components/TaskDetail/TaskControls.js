@@ -89,16 +89,12 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
           <option value="medium">Medium Priority</option>
           <option value="low">Low Priority</option>
         </select>
-      </div>
 
       {timeLeft && (
         <div className="text-sm text-orange-600 font-medium italic">
           ⏳ {formatTimeLeft(timeLeft)} left
         </div>
       )}
-
-      <div className="flex items-center gap-3">
-        <label className="text-sm font-medium">Set Timer:</label>
 
         <select
           onChange={(e) => {
@@ -111,7 +107,7 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
           disabled={!isManager}
           defaultValue=""
         >
-          <option value="">-- Choose --</option>
+          <option value="">-- No Timer --</option>
           <option value="1020000">17 min (test)</option>
           <option value="1800000">30 min</option>
           <option value="3600000">1 hour</option>
