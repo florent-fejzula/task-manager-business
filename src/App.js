@@ -49,7 +49,7 @@ function TaskDetailWithSettings({ userId }) {
 
 function App() {
   const [triggerFetch, setTriggerFetch] = useState(false);
-  const { currentUser } = useAuth();
+  const { currentUser, userData } = useAuth();
 
   // ✅ Notifications
   useEffect(() => {
@@ -90,12 +90,14 @@ function App() {
                         Stay on top of your goals, one task at a time.
                       </p>
                       <div className="text-right mt-4 flex justify-end items-center gap-4">
-                        <Link
-                          to="/my-tasks"
-                          className="text-sm text-blue-600 hover:underline"
-                        >
-                          My Tasks
-                        </Link>
+                        {userData?.role === "manager" && (
+                          <Link
+                            to="/my-tasks"
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            My Tasks
+                          </Link>
+                        )}
                         <Link
                           to="/settings"
                           className="text-sm text-blue-600 hover:underline"
@@ -119,10 +121,11 @@ function App() {
                 )
               }
             />
+
             <Route
               path="/my-tasks"
               element={
-                currentUser ? (
+                currentUser && userData?.role === "manager" ? (
                   <div className="min-h-screen bg-soft text-primary font-sans px-4 py-8 sm:py-12">
                     <div className="max-w-2xl mx-auto">
                       <header className="mb-10 text-center">
@@ -147,10 +150,11 @@ function App() {
                     </div>
                   </div>
                 ) : (
-                  <Navigate to="/login" />
+                  <Navigate to="/" />
                 )
               }
             />
+
             <Route
               path="/task/:id"
               element={
@@ -161,6 +165,7 @@ function App() {
                 )
               }
             />
+
             <Route
               path="/settings"
               element={currentUser ? <Settings /> : <Navigate to="/login" />}
