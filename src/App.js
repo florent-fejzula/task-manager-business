@@ -91,6 +91,12 @@ function App() {
                       </p>
                       <div className="text-right mt-4 flex justify-end items-center gap-4">
                         <Link
+                          to="/my-tasks"
+                          className="text-sm text-blue-600 hover:underline"
+                        >
+                          My Tasks
+                        </Link>
+                        <Link
                           to="/settings"
                           className="text-sm text-blue-600 hover:underline"
                         >
@@ -108,6 +114,38 @@ function App() {
                       />
                     </div>
                   </>
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+            <Route
+              path="/my-tasks"
+              element={
+                currentUser ? (
+                  <div className="min-h-screen bg-soft text-primary font-sans px-4 py-8 sm:py-12">
+                    <div className="max-w-2xl mx-auto">
+                      <header className="mb-10 text-center">
+                        <h1 className="text-3xl font-bold tracking-tight mb-3 sm:mb-2">
+                          My Tasks
+                        </h1>
+                        <div className="w-16 h-1 mx-auto bg-accent rounded"></div>
+                        <Link
+                          to="/"
+                          className="text-sm text-blue-600 hover:underline"
+                        >
+                          ← Back to All Tasks
+                        </Link>
+                      </header>
+
+                      <TaskList
+                        triggerFetch={triggerFetch}
+                        setTriggerFetch={setTriggerFetch}
+                        userId={currentUser.uid}
+                        filterToMyTasks={true}
+                      />
+                    </div>
+                  </div>
                 ) : (
                   <Navigate to="/login" />
                 )

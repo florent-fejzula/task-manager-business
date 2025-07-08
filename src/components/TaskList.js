@@ -16,7 +16,7 @@ import { useAuth } from "../context/AuthContext";
 import TaskCard from "./TaskCard";
 import AddTaskForm from "./AddTaskForm";
 
-function TaskList({ triggerFetch }) {
+function TaskList({ triggerFetch, filterToMyTasks = false }) {
   const { currentUser, userData } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [showAddTask, setShowAddTask] = useState(false);
@@ -94,13 +94,13 @@ function TaskList({ triggerFetch }) {
         const tasksRef = collection(db, "tasks");
 
         if (userData?.role === "manager") {
-          q = query(tasksRef, orderBy("createdAt", "desc"));
+          if (filterToMyTasks) {
+            q = query(tasksRef, where("assignedTo", "==", currentUser.uid));
+          } else {
+            q = query(tasksRef, orderBy("createdAt", "desc"));
+          }
         } else {
-          q = query(
-            tasksRef,
-            where("assignedTo", "==", currentUser.uid)
-            // orderBy("createdAt", "desc")
-          );
+          q = query(tasksRef, where("assignedTo", "==", currentUser.uid));
         }
 
         const snapshot = await getDocs(q);
@@ -145,7 +145,7 @@ function TaskList({ triggerFetch }) {
     if (currentUser?.uid && userData?.role) {
       fetchTasksAndSettings();
     }
-  }, [triggerFetch, currentUser?.uid, userData]);
+  }, [triggerFetch, currentUser?.uid, userData, filterToMyTasks]);
 
   if (loading) {
     return (
