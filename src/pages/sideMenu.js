@@ -52,7 +52,7 @@ function SideMenu() {
               onClick={() => setOpen(false)}
               className="text-blue-600 hover:underline"
             >
-              ⚙️ Settings
+              Settings
             </Link>
             <Logout />
           </nav>

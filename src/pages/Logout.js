@@ -13,7 +13,7 @@ function Logout() {
   return (
     <button
       onClick={handleLogout}
-      className="text-sm text-gray-500 hover:underline"
+      className="text-sm text-left text-gray-500 hover:underline"
     >
       Logout
     </button>
