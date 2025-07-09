@@ -21,7 +21,8 @@ import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import Settings from "./pages/Settings";
-import Logout from "./pages/Logout";
+import EmployeeList from "./pages/EmployeeList";
+import EmployeeTasks from "./pages/EmployeeTasks";
 
 function TaskDetailWithSettings({ userId }) {
   const [settings, setSettings] = useState(null);
@@ -93,12 +94,20 @@ function App() {
                       </p>
                       <div className="text-right mt-4 flex items-center gap-4">
                         {userData?.role === "manager" && (
-                          <Link
-                            to="/my-tasks"
-                            className="text-sm text-blue-600 hover:underline"
-                          >
-                            My Tasks
-                          </Link>
+                          <>
+                            <Link
+                              to="/my-tasks"
+                              className="text-sm text-blue-600 hover:underline"
+                            >
+                              My Tasks
+                            </Link>
+                            <Link
+                              to="/employees"
+                              className="text-sm text-blue-600 hover:underline"
+                            >
+                              Employees
+                            </Link>
+                          </>
                         )}
                       </div>
                     </header>
@@ -147,6 +156,20 @@ function App() {
                 ) : (
                   <Navigate to="/" />
                 )
+              }
+            />
+
+            <Route
+              path="/employees"
+              element={
+                currentUser ? <EmployeeList /> : <Navigate to="/login" />
+              }
+            />
+
+            <Route
+              path="/employees/:id"
+              element={
+                currentUser ? <EmployeeTasks /> : <Navigate to="/login" />
               }
             />
 
