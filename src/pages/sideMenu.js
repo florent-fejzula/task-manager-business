@@ -20,10 +20,16 @@ function SideMenu() {
       </div>
 
       {/* Overlay + Panel */}
-      <div className={`fixed inset-0 z-50 pointer-events-none ${open ? "pointer-events-auto" : ""}`}>
+      <div
+        className={`fixed inset-0 z-50 pointer-events-none ${
+          open ? "pointer-events-auto" : ""
+        }`}
+      >
         {/* Overlay with fade animation */}
         <div
-          className={`absolute inset-0 bg-black transition-opacity duration-300 ${open ? "opacity-30" : "opacity-0"}`}
+          className={`absolute inset-0 bg-black transition-opacity duration-300 ${
+            open ? "opacity-30" : "opacity-0"
+          }`}
           onClick={() => setOpen(false)}
         ></div>
 
@@ -46,6 +52,9 @@ function SideMenu() {
               className="text-blue-600 hover:underline"
             >
               Home
+            </Link>
+            <Link to="/schedule" className="text-blue-600 hover:underline">
+              🗓️ Schedule
             </Link>
             <Link
               to="/settings"

@@ -20,6 +20,7 @@ import TaskDetail from "./components/TaskDetail/TaskDetail";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
+import Schedule from "./pages/Schedule";
 import Settings from "./pages/Settings";
 import EmployeeList from "./pages/EmployeeList";
 import EmployeeTasks from "./pages/EmployeeTasks";
@@ -188,6 +189,7 @@ function App() {
               path="/settings"
               element={currentUser ? <Settings /> : <Navigate to="/login" />}
             />
+            <Route path="/schedule" element={<Schedule />} />
             <Route
               path="/login"
               element={!currentUser ? <Login /> : <Navigate to="/" />}
