@@ -16,6 +16,17 @@ function TaskControls({ task, onUpdate }) {
   const [customMinutes, setCustomMinutes] = useState(0);
   const [timerError, setTimerError] = useState("");
 
+  // --- Recurring UI state ---
+  const [recurringEnabled, setRecurringEnabled] = useState(!!task.recurring);
+  const [recurringInterval, setRecurringInterval] = useState(
+    Number(task.recurringInterval) || 7
+  );
+
+  useEffect(() => {
+    setRecurringEnabled(!!task.recurring);
+    setRecurringInterval(Number(task.recurringInterval) || 7);
+  }, [task.recurring, task.recurringInterval]);
+
   useEffect(() => {
     if (!task?.timerStart || !task?.timerDuration) {
       setTimeLeft(null);
@@ -109,6 +120,40 @@ function TaskControls({ task, onUpdate }) {
 
     await handleSetTimer(totalMs);
     setShowCustom(false);
+  };
+
+  // --- Recurring handlers ---
+  const handleRecurringToggle = async (checked) => {
+    const ref = doc(db, "tasks", task.id);
+    if (checked) {
+      const payload = {
+        recurring: true,
+        recurringInterval:
+          Number(recurringInterval) > 0 ? Number(recurringInterval) : 7,
+        // if missing, start schedule now
+        lastOccurrence: task.lastOccurrence || Date.now(),
+      };
+      await updateDoc(ref, payload);
+      onUpdate(payload);
+      setRecurringEnabled(true);
+    } else {
+      const payload = {
+        recurring: false,
+        recurringInterval: null,
+        lastOccurrence: null,
+      };
+      await updateDoc(ref, payload);
+      onUpdate(payload);
+      setRecurringEnabled(false);
+    }
+  };
+
+  const handleRecurringIntervalSave = async () => {
+    const val = Math.max(1, Number(recurringInterval) || 1);
+    const ref = doc(db, "tasks", task.id);
+    const payload = { recurringInterval: val };
+    await updateDoc(ref, payload);
+    onUpdate(payload);
   };
 
   return (
@@ -218,7 +263,9 @@ function TaskControls({ task, onUpdate }) {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-600 mb-1">Minutes</label>
+              <label className="block text-xs text-gray-600 mb-1">
+                Minutes
+              </label>
               <input
                 type="number"
                 min={0}
@@ -249,6 +296,33 @@ function TaskControls({ task, onUpdate }) {
         )}
 
         {timerError && <div className="text-xs text-red-600">{timerError}</div>}
+      </div>
+
+      {/* 🔁 Recurring controls (any user) */}
+      <div className="mt-2 border rounded p-3">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={recurringEnabled}
+            onChange={(e) => handleRecurringToggle(e.target.checked)}
+          />
+          <span className="text-sm font-medium">Recurring task</span>
+        </label>
+
+        {recurringEnabled && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-sm">Every</span>
+            <input
+              type="number"
+              min="1"
+              className="w-20 border px-2 py-1 rounded text-sm"
+              value={recurringInterval}
+              onChange={(e) => setRecurringInterval(e.target.value)}
+              onBlur={handleRecurringIntervalSave}
+            />
+            <span className="text-sm">days</span>
+          </div>
+        )}
       </div>
     </div>
   );

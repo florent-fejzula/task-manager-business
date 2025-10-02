@@ -11,6 +11,10 @@ function AddTaskForm({ users = [], userData, onClose }) {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // 🔁 Recurring fields
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [intervalDays, setIntervalDays] = useState(7);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim() || !currentUser) return;
@@ -26,6 +30,10 @@ function AddTaskForm({ users = [], userData, onClose }) {
         assignedTo: assignedTo || currentUser.uid,
         createdBy: currentUser.uid,
         comment: comment.trim() || "",
+        // 🔁 Recurring fields
+        recurring: isRecurring,
+        recurringInterval: isRecurring ? intervalDays : null,
+        lastOccurrence: isRecurring ? Date.now() : null,
       });
 
       // Reset form
@@ -33,6 +41,8 @@ function AddTaskForm({ users = [], userData, onClose }) {
       setStatus("todo");
       setAssignedTo("");
       setComment("");
+      setIsRecurring(false);
+      setIntervalDays(7);
 
       // Optional: close form after success
       if (onClose) onClose();
@@ -89,6 +99,32 @@ function AddTaskForm({ users = [], userData, onClose }) {
           />
         </>
       )}
+
+      {/* 🔁 Recurring UI */}
+      <div className="border p-3 rounded-md">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isRecurring}
+            onChange={(e) => setIsRecurring(e.target.checked)}
+          />
+          <span className="text-sm font-medium">Make this task recurring</span>
+        </label>
+
+        {isRecurring && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-sm">Every</span>
+            <input
+              type="number"
+              min="1"
+              className="w-20 border px-2 py-1 rounded text-sm"
+              value={intervalDays}
+              onChange={(e) => setIntervalDays(Number(e.target.value))}
+            />
+            <span className="text-sm">days</span>
+          </div>
+        )}
+      </div>
 
       <button
         type="submit"

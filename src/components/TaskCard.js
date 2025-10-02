@@ -8,7 +8,6 @@ function TaskCard({
   userData,
   userMap,
   onStatusChange,
-  onSubTaskUpdate,
   collapseSubtasks,
 }) {
   const [showDoneSubTasks, setShowDoneSubTasks] = useState(false);
@@ -84,7 +83,6 @@ function TaskCard({
     await updateDoc(doc(db, "tasks", task.id), {
       subTasks: updated,
     });
-    onSubTaskUpdate(task.id, updated);
   };
 
   const handleDeleteSubTask = async (index) => {
@@ -93,7 +91,6 @@ function TaskCard({
     await updateDoc(doc(db, "tasks", task.id), {
       subTasks: updated,
     });
-    onSubTaskUpdate(task.id, updated);
   };
 
   const handleAddSubTask = async (e) => {
@@ -108,7 +105,6 @@ function TaskCard({
     await updateDoc(doc(db, "tasks", task.id), {
       subTasks: updated,
     });
-    onSubTaskUpdate(task.id, updated);
     input.value = "";
   };
 
@@ -137,6 +133,13 @@ function TaskCard({
           <option value="done">Closed</option>
         </select>
       </div>
+
+      {task.recurring && task.recurringInterval ? (
+        <div className="text-xs text-purple-700 font-medium mb-1 ml-1">
+          🔁 Every {task.recurringInterval} day
+          {Number(task.recurringInterval) === 1 ? "" : "s"}
+        </div>
+      ) : null}
 
       {userData?.role === "manager" && (
         <p className="text-sm italic text-gray-500 ml-1 mt-1">
