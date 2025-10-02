@@ -16,7 +16,11 @@ import { useAuth } from "../context/AuthContext";
 import TaskCard from "./TaskCard";
 import AddTaskForm from "./AddTaskForm";
 
-function TaskList({ triggerFetch, filterToMyTasks = false, overrideUserId = null }) {
+function TaskList({
+  triggerFetch,
+  filterToMyTasks = false,
+  overrideUserId = null,
+}) {
   const { currentUser, userData } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [showAddTask, setShowAddTask] = useState(false);
@@ -62,6 +66,8 @@ function TaskList({ triggerFetch, filterToMyTasks = false, overrideUserId = null
         comment: comment || "", // add comment field here
       });
 
+      console.log("🔥 Task added to Firestore with ID:", docRef.id);
+
       setTasks((prev) => [
         {
           id: docRef.id,
@@ -100,6 +106,8 @@ function TaskList({ triggerFetch, filterToMyTasks = false, overrideUserId = null
           } else {
             q = query(tasksRef, orderBy("createdAt", "desc"));
           }
+        } else {
+          q = query(tasksRef, where("assignedTo", "==", currentUser.uid));
         }
 
         const snapshot = await getDocs(q);
@@ -144,7 +152,13 @@ function TaskList({ triggerFetch, filterToMyTasks = false, overrideUserId = null
     if (currentUser?.uid && userData?.role) {
       fetchTasksAndSettings();
     }
-  }, [triggerFetch, currentUser.uid, userData, filterToMyTasks, overrideUserId]);
+  }, [
+    triggerFetch,
+    currentUser.uid,
+    userData,
+    filterToMyTasks,
+    overrideUserId,
+  ]);
 
   if (loading) {
     return (

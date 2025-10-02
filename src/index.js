@@ -8,10 +8,10 @@ import "./index.css";
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/sw.js")
+      .register("/sw.js") // register as classic script, not module
       .then((registration) => {
-        registration.update();
         console.log("🔧 Custom SW registered");
+        registration.update();
 
         registration.addEventListener("updatefound", () => {
           const newWorker = registration.installing;
@@ -38,7 +38,7 @@ if ("serviceWorker" in navigator) {
         });
       })
       .catch((err) => {
-        console.error("SW registration failed:", err);
+        console.error("❌ SW registration failed:", err);
       });
   });
 }

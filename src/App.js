@@ -12,7 +12,7 @@ import { messaging } from "./firebase/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase/firebase";
 import { useAuth } from "./context/AuthContext";
-// import { requestNotificationPermission } from "./firebase/requestPermission";
+import { requestNotificationPermission } from "./firebase/fcm";
 
 import SideMenu from "./pages/sideMenu";
 import TaskList from "./components/TaskList";
@@ -58,7 +58,7 @@ function App() {
   useEffect(() => {
     if (!currentUser) return;
 
-    // requestNotificationPermission(currentUser.uid);
+    requestNotificationPermission(currentUser.uid);
 
     const unsubscribe = onMessage(messaging, (payload) => {
       console.log("📩 Foreground message received:", payload);
@@ -87,7 +87,7 @@ function App() {
                   <>
                     <header className="mb-6 text-center">
                       <h1 className="text-4xl font-bold tracking-tight mb-3 sm:mb-2">
-                        Task Manager B1.1
+                        Task Manager B1.2
                       </h1>
                       <div className="w-16 h-1 mx-auto bg-accent rounded"></div>
                       <p className="mt-2 text-sm text-gray-500">

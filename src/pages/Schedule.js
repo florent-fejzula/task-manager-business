@@ -26,7 +26,6 @@ const labels = {
 
 function Schedule() {
   const { userData } = useAuth();
-  const isManager = userData?.role === "manager";
   const currentUserName = userData?.name || userData?.email || "";
   const [schedule, setSchedule] = useState({});
   const [loading, setLoading] = useState(true);
@@ -67,6 +66,25 @@ function Schedule() {
     } catch (err) {
       console.error("Error saving schedule:", err);
       alert("Failed to save schedule.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReset = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to reset the schedule?"
+    );
+    if (!confirmed) return;
+
+    setSaving(true);
+    try {
+      await setDoc(doc(db, "schedule", "current"), {}); // clear Firestore
+      setSchedule({}); // clear local state
+      alert("Schedule reset successfully!");
+    } catch (err) {
+      console.error("Error resetting schedule:", err);
+      alert("Failed to reset schedule.");
     } finally {
       setSaving(false);
     }
@@ -137,7 +155,7 @@ function Schedule() {
         ))}
       </div>
 
-      {isManager && (
+      {
         <form onSubmit={handleSubmit} className="space-y-8">
           <h2 className="text-xl font-semibold text-center mb-4">
             ✏️ Edit Schedule
@@ -188,8 +206,15 @@ function Schedule() {
           >
             {saving ? "Saving..." : "Save Schedule"}
           </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded ml-4"
+          >
+            Reset Schedule
+          </button>
         </form>
-      )}
+      }
     </div>
   );
 }
