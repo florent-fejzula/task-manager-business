@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
-import { updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../firebase/firebase";
 
-function SubtaskList({ task, taskRef, onUpdate, collapseSubtasks }) {
+function SubtaskList({ task, onUpdate, collapseSubtasks }) {
   const [showDoneSubTasks, setShowDoneSubTasks] = useState(false);
   const [newSubtask, setNewSubtask] = useState("");
+
+  // Build reference locally → no need to pass from parent
+  const taskRef = task?.id ? doc(db, "tasks", task.id) : null;
 
   useEffect(() => {
     if (typeof collapseSubtasks === "boolean") {
@@ -12,7 +16,8 @@ function SubtaskList({ task, taskRef, onUpdate, collapseSubtasks }) {
   }, [collapseSubtasks]);
 
   const toggleSubTask = async (index) => {
-    const updated = [...task.subTasks];
+    if (!taskRef) return;
+    const updated = [...(task.subTasks || [])];
     const sub = updated[index];
 
     if (!sub.done && !sub.inProgress) {
@@ -30,18 +35,24 @@ function SubtaskList({ task, taskRef, onUpdate, collapseSubtasks }) {
   };
 
   const deleteSubTask = async (index) => {
-    const updated = [...task.subTasks];
+    if (!taskRef) return;
+    const updated = [...(task.subTasks || [])];
     updated.splice(index, 1);
+
     await updateDoc(taskRef, { subTasks: updated });
     onUpdate({ subTasks: updated });
   };
 
   const handleAddSubtask = async (e) => {
     e.preventDefault();
+    if (!taskRef) return;
     const title = newSubtask.trim();
     if (!title) return;
 
-    const updated = [...(task.subTasks || []), { title, done: false, inProgress: false }];
+    const updated = [
+      ...(task.subTasks || []),
+      { title, done: false, inProgress: false },
+    ];
     await updateDoc(taskRef, { subTasks: updated });
     onUpdate({ subTasks: updated });
     setNewSubtask("");
@@ -59,7 +70,11 @@ function SubtaskList({ task, taskRef, onUpdate, collapseSubtasks }) {
                   checked={sub.done}
                   onChange={() => toggleSubTask(index)}
                 />
-                <span className={sub.inProgress ? "text-blue-600 italic" : "text-gray-800"}>
+                <span
+                  className={
+                    sub.inProgress ? "text-blue-600 italic" : "text-gray-800"
+                  }
+                >
                   {sub.title}
                 </span>
               </label>
@@ -89,7 +104,12 @@ function SubtaskList({ task, taskRef, onUpdate, collapseSubtasks }) {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </li>
         )}
@@ -104,7 +124,9 @@ function SubtaskList({ task, taskRef, onUpdate, collapseSubtasks }) {
                     checked={sub.done}
                     onChange={() => toggleSubTask(index)}
                   />
-                  <span className="line-through text-gray-400">{sub.title}</span>
+                  <span className="line-through text-gray-400">
+                    {sub.title}
+                  </span>
                 </label>
                 <button
                   onClick={() => deleteSubTask(index)}

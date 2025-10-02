@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+// Schedule.js
+import { useState } from "react";
+import { doc, setDoc } from "firebase/firestore";
 import { Link } from "react-router-dom";
 import { db } from "../firebase/firebase";
 import { useAuth } from "../context/AuthContext";
+import { useData } from "../context/DataContext";
 
 const days = [
   "monday",
@@ -13,7 +15,6 @@ const days = [
   "saturday",
   "sunday",
 ];
-
 const labels = {
   monday: "Monday",
   tuesday: "Tuesday",
@@ -26,35 +27,13 @@ const labels = {
 
 function Schedule() {
   const { userData } = useAuth();
+  const { schedule } = useData(); // 🔑 use cached schedule
   const currentUserName = userData?.name || userData?.email || "";
-  const [schedule, setSchedule] = useState({});
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const fetchSchedule = async () => {
-      try {
-        const snap = await getDoc(doc(db, "schedule", "current"));
-        if (snap.exists()) {
-          setSchedule(snap.data());
-        } else {
-          setSchedule({});
-        }
-      } catch (err) {
-        console.error("Error fetching schedule:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSchedule();
-  }, []);
-
   const handleChange = (day, slot, value) => {
-    setSchedule((prev) => ({
-      ...prev,
-      [`${day}${slot}`]: value,
-    }));
+    // local edit
+    schedule[`${day}${slot}`] = value;
   };
 
   const handleSubmit = async (e) => {
@@ -72,15 +51,10 @@ function Schedule() {
   };
 
   const handleReset = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to reset the schedule?"
-    );
-    if (!confirmed) return;
-
+    if (!window.confirm("Are you sure you want to reset the schedule?")) return;
     setSaving(true);
     try {
-      await setDoc(doc(db, "schedule", "current"), {}); // clear Firestore
-      setSchedule({}); // clear local state
+      await setDoc(doc(db, "schedule", "current"), {});
       alert("Schedule reset successfully!");
     } catch (err) {
       console.error("Error resetting schedule:", err);
@@ -92,28 +66,19 @@ function Schedule() {
 
   const highlightUser = (text) => {
     if (!text || !currentUserName) return text;
-
-    const parts = text.split(/,\s*/);
-    return parts.map((name, i) => {
-      const trimmed = name.trim();
-      const isCurrentUser = trimmed
+    return text.split(/,\s*/).map((name, i) => {
+      const isCurrent = name
+        .trim()
         .toLowerCase()
         .includes(currentUserName.toLowerCase());
-
       return (
-        <span key={i} className={isCurrentUser ? "font-bold text-black" : ""}>
-          {trimmed}
-          {i < parts.length - 1 ? ", " : ""}
+        <span key={i} className={isCurrent ? "font-bold text-black" : ""}>
+          {name.trim()}
+          {i < text.split(/,\s*/).length - 1 ? ", " : ""}
         </span>
       );
     });
   };
-
-  if (loading) {
-    return (
-      <div className="text-center mt-10 text-gray-500">Loading schedule...</div>
-    );
-  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
@@ -126,6 +91,7 @@ function Schedule() {
         </div>
       </h1>
 
+      {/* Show schedule instantly, no spinner */}
       <div className="space-y-6 mb-10">
         {days.map((day) => (
           <div key={day}>
@@ -134,9 +100,7 @@ function Schedule() {
             </h2>
             <ul className="text-sm text-gray-800 ml-2 list-disc pl-4">
               {day === "sunday" ? (
-                schedule[`${day}`] && (
-                  <li>{highlightUser(schedule[`${day}`])}</li>
-                )
+                schedule[day] && <li>{highlightUser(schedule[day])}</li>
               ) : (
                 <>
                   {schedule[`${day}1`] && (
@@ -155,66 +119,59 @@ function Schedule() {
         ))}
       </div>
 
-      {
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <h2 className="text-xl font-semibold text-center mb-4">
-            ✏️ Edit Schedule
-          </h2>
-          {days.map((day) => (
-            <div key={day}>
-              <label className="block font-medium mb-1">{labels[day]}</label>
-              {day === "sunday" ? (
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <h2 className="text-xl font-semibold text-center mb-4">
+          ✏️ Edit Schedule
+        </h2>
+        {days.map((day) => (
+          <div key={day}>
+            <label className="block font-medium mb-1">{labels[day]}</label>
+            {day === "sunday" ? (
+              <input
+                type="text"
+                defaultValue={schedule[day] || ""}
+                onChange={(e) => handleChange(day, "", e.target.value)}
+                className="w-full border px-3 py-2 rounded text-sm"
+              />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <input
                   type="text"
-                  value={schedule[day] || ""}
-                  onChange={(e) => handleChange(day, "", e.target.value)}
-                  className="w-full border px-3 py-2 rounded text-sm"
-                  placeholder="e.g. Gresa Florent"
+                  defaultValue={schedule[`${day}1`] || ""}
+                  onChange={(e) => handleChange(day, "1", e.target.value)}
+                  className="border px-3 py-2 rounded text-sm"
                 />
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <input
-                    type="text"
-                    value={schedule[`${day}1`] || ""}
-                    onChange={(e) => handleChange(day, "1", e.target.value)}
-                    className="border px-3 py-2 rounded text-sm"
-                    placeholder="1st shift (10-16)"
-                  />
-                  <input
-                    type="text"
-                    value={schedule[`${day}Mid`] || ""}
-                    onChange={(e) => handleChange(day, "Mid", e.target.value)}
-                    className="border px-3 py-2 rounded text-sm"
-                    placeholder="Mid shift (optional)"
-                  />
-                  <input
-                    type="text"
-                    value={schedule[`${day}2`] || ""}
-                    onChange={(e) => handleChange(day, "2", e.target.value)}
-                    className="border px-3 py-2 rounded text-sm"
-                    placeholder="2nd shift (16-22)"
-                  />
-                </div>
-              )}
-            </div>
-          ))}
-
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-          >
-            {saving ? "Saving..." : "Save Schedule"}
-          </button>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded ml-4"
-          >
-            Reset Schedule
-          </button>
-        </form>
-      }
+                <input
+                  type="text"
+                  defaultValue={schedule[`${day}Mid`] || ""}
+                  onChange={(e) => handleChange(day, "Mid", e.target.value)}
+                  className="border px-3 py-2 rounded text-sm"
+                />
+                <input
+                  type="text"
+                  defaultValue={schedule[`${day}2`] || ""}
+                  onChange={(e) => handleChange(day, "2", e.target.value)}
+                  className="border px-3 py-2 rounded text-sm"
+                />
+              </div>
+            )}
+          </div>
+        ))}
+        <button
+          type="submit"
+          disabled={saving}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+        >
+          {saving ? "Saving..." : "Save Schedule"}
+        </button>
+        <button
+          type="button"
+          onClick={handleReset}
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded ml-4"
+        >
+          Reset Schedule
+        </button>
+      </form>
     </div>
   );
 }

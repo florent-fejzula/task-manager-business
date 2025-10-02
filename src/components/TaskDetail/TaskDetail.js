@@ -1,9 +1,17 @@
-// TaskDetail.js (with assignment dropdown)
+// src/components/tasks/TaskDetail.js
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { doc, getDoc, deleteDoc, getDocs, collection, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  onSnapshot,
+  deleteDoc,
+  getDocs,
+  collection,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../../firebase/firebase";
 import { useAuth } from "../../context/AuthContext";
+import { useData } from "../../context/DataContext";
 import TaskHeader from "./TaskHeader";
 import SubtaskList from "../SubtaskList";
 import DeleteConfirmModal from "./DeleteConfirmModal";
@@ -12,42 +20,55 @@ import TaskControls from "./TaskControls";
 function TaskDetail({ collapseSubtasks = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentUser, userData } = useAuth();
-  const [task, setTask] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { userData } = useAuth();
+  const { taskMap } = useData();
+
+  const [task, setTask] = useState(taskMap[id] || null);
+  const [loading, setLoading] = useState(!task);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [userList, setUserList] = useState([]);
 
-  const taskRef = doc(db, "tasks", id);
   const isManager = userData?.role === "manager";
 
+  // Live subscribe to this task (cache-first thanks to Firestore persistence)
   useEffect(() => {
-    const fetchTask = async () => {
-      const snapshot = await getDoc(taskRef);
-      if (snapshot.exists()) {
-        setTask({ id: snapshot.id, ...snapshot.data() });
-      }
+    const ref = doc(db, "tasks", id);
+    setLoading(!task);
 
-      if (userData?.role === "manager") {
-        const usersSnap = await getDocs(collection(db, "users"));
-        const users = usersSnap.docs.map((doc) => ({
-          uid: doc.id,
-          ...doc.data(),
-        }));
-        setUserList(users);
+    const unsub = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        setTask({ id: snap.id, ...snap.data() });
+      } else {
+        setTask(null);
       }
-
       setLoading(false);
-    };
-    fetchTask();
-  }, [id, currentUser.uid, taskRef, userData?.role]);
+    });
 
-  const handleUpdateTask = async (updates) => {
+    return () => unsub();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  // Manager-only: fetch list of users once
+  useEffect(() => {
+    if (!isManager) return;
+    const fetchUsers = async () => {
+      const usersSnap = await getDocs(collection(db, "users"));
+      const users = usersSnap.docs.map((doc) => ({
+        uid: doc.id,
+        ...doc.data(),
+      }));
+      setUserList(users);
+    };
+    fetchUsers();
+  }, [isManager]);
+
+  const handleUpdateTask = (updates) => {
     setTask((prev) => ({ ...prev, ...updates }));
   };
 
   const handleDeleteTask = async () => {
-    await deleteDoc(taskRef);
+    const ref = doc(db, "tasks", id);
+    await deleteDoc(ref);
     navigate("/");
   };
 
@@ -72,28 +93,26 @@ function TaskDetail({ collapseSubtasks = false }) {
         <span className="text-xs text-gray-400">Task Detail</span>
       </div>
 
-      <TaskHeader task={task} taskRef={taskRef} onUpdate={handleUpdateTask} />
+      {/* no taskRef passed anymore */}
+      <TaskHeader task={task} onUpdate={handleUpdateTask} />
 
-      {/* Comment */}
       {task.comment && (
         <p className="text-sm text-gray-700 mb-3 ml-1">• {task.comment}</p>
       )}
-      
-      <TaskControls
-        task={task}
-        taskRef={taskRef}
-        onUpdate={handleUpdateTask}
-      />
+
+      <TaskControls task={task} onUpdate={handleUpdateTask} />
 
       {/* Manager-only reassignment dropdown */}
       {isManager && (
         <div className="my-4">
-          <label className="block text-sm font-medium mb-1">Reassign Task:</label>
+          <label className="block text-sm font-medium mb-1">
+            Reassign Task:
+          </label>
           <select
-            value={task.assignedTo}
+            value={task.assignedTo || ""}
             onChange={async (e) => {
               const newUid = e.target.value;
-              await updateDoc(taskRef, { assignedTo: newUid });
+              await updateDoc(doc(db, "tasks", id), { assignedTo: newUid });
               handleUpdateTask({ assignedTo: newUid });
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-accent"
@@ -108,9 +127,9 @@ function TaskDetail({ collapseSubtasks = false }) {
         </div>
       )}
 
+      {/* no taskRef passed anymore */}
       <SubtaskList
         task={task}
-        taskRef={taskRef}
         onUpdate={handleUpdateTask}
         collapseSubtasks={collapseSubtasks}
       />

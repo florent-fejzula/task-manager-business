@@ -1,26 +1,50 @@
 import { useState } from "react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebase/firebase";
+import { useAuth } from "../context/AuthContext";
 
-function AddTaskForm({ onAdd, users = [], userData }) {
+function AddTaskForm({ users = [], userData, onClose }) {
+  const { currentUser } = useAuth();
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("todo");
   const [assignedTo, setAssignedTo] = useState("");
   const [comment, setComment] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    onAdd(title, status, assignedTo || null, comment.trim() || null);
-    setTitle("");
-    setStatus("todo");
-    setAssignedTo("");
-    setComment("");
+    if (!title.trim() || !currentUser) return;
+
+    setLoading(true);
+    try {
+      await addDoc(collection(db, "tasks"), {
+        title: title.trim(),
+        status,
+        priority: "medium",
+        createdAt: serverTimestamp(),
+        subTasks: [],
+        assignedTo: assignedTo || currentUser.uid,
+        createdBy: currentUser.uid,
+        comment: comment.trim() || "",
+      });
+
+      // Reset form
+      setTitle("");
+      setStatus("todo");
+      setAssignedTo("");
+      setComment("");
+
+      // Optional: close form after success
+      if (onClose) onClose();
+    } catch (err) {
+      console.error("Error adding task:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mt-4 space-y-3 max-w-md mx-auto"
-    >
+    <form onSubmit={handleSubmit} className="mt-4 space-y-3 max-w-md mx-auto">
       <input
         type="text"
         value={title}
@@ -68,9 +92,10 @@ function AddTaskForm({ onAdd, users = [], userData }) {
 
       <button
         type="submit"
-        className="w-full bg-accent text-white py-2 rounded-md hover:bg-accent-dark transition"
+        disabled={loading}
+        className="w-full bg-accent text-white py-2 rounded-md hover:bg-accent-dark transition disabled:opacity-60"
       >
-        Add Task
+        {loading ? "Adding..." : "Add Task"}
       </button>
     </form>
   );

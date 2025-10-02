@@ -24,6 +24,7 @@ import Schedule from "./pages/Schedule";
 import Settings from "./pages/Settings";
 import EmployeeList from "./pages/EmployeeList";
 import EmployeeTasks from "./pages/EmployeeTasks";
+import { DataProvider } from "./context/DataContext";
 
 function TaskDetailWithSettings({ userId }) {
   const [settings, setSettings] = useState(null);
@@ -79,130 +80,134 @@ function App() {
       <div className="min-h-screen bg-soft text-primary font-sans px-4 py-8 sm:py-12">
         <SideMenu />
         <div className="max-w-2xl mx-auto">
-          <Routes>
-            <Route
-              path="/"
-              element={
-                currentUser ? (
-                  <>
-                    <header className="mb-6 text-center">
-                      <h1 className="text-4xl font-bold tracking-tight mb-3 sm:mb-2">
-                        Task Manager B1.2
-                      </h1>
-                      <div className="w-16 h-1 mx-auto bg-accent rounded"></div>
-                      <p className="mt-2 text-sm text-gray-500">
-                        Stay on top of your goals, one task at a time.
-                      </p>
-                      <div className="text-right mt-4 flex items-center gap-4">
-                        {userData?.role === "manager" && (
-                          <>
-                            <Link
-                              to="/my-tasks"
-                              className="text-sm text-blue-600 hover:underline"
-                            >
-                              My Tasks
-                            </Link>
-                            <Link
-                              to="/employees"
-                              className="text-sm text-blue-600 hover:underline"
-                            >
-                              Employees
-                            </Link>
-                          </>
-                        )}
-                      </div>
-                    </header>
-
-                    <div>
-                      <TaskList
-                        triggerFetch={triggerFetch}
-                        setTriggerFetch={setTriggerFetch}
-                        userId={currentUser.uid}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
-
-            <Route
-              path="/my-tasks"
-              element={
-                currentUser && userData?.role === "manager" ? (
-                  <div className="min-h-screen bg-soft text-primary font-sans px-4 py-8 sm:py-12">
-                    <div className="max-w-2xl mx-auto">
-                      <header className="mb-10 text-center">
-                        <h1 className="text-3xl font-bold tracking-tight mb-3 sm:mb-2">
-                          My Tasks
+          <DataProvider>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  currentUser ? (
+                    <>
+                      <header className="mb-6 text-center">
+                        <h1 className="text-4xl font-bold tracking-tight mb-3 sm:mb-2">
+                          Task Manager B1.2
                         </h1>
                         <div className="w-16 h-1 mx-auto bg-accent rounded"></div>
-                        <Link
-                          to="/"
-                          className="text-sm text-blue-600 hover:underline"
-                        >
-                          ← Back to All Tasks
-                        </Link>
+                        <p className="mt-2 text-sm text-gray-500">
+                          Stay on top of your goals, one task at a time.
+                        </p>
+                        <div className="text-right mt-4 flex items-center gap-4">
+                          {userData?.role === "manager" && (
+                            <>
+                              <Link
+                                to="/my-tasks"
+                                className="text-sm text-blue-600 hover:underline"
+                              >
+                                My Tasks
+                              </Link>
+                              <Link
+                                to="/employees"
+                                className="text-sm text-blue-600 hover:underline"
+                              >
+                                Employees
+                              </Link>
+                            </>
+                          )}
+                        </div>
                       </header>
 
-                      <TaskList
-                        triggerFetch={triggerFetch}
-                        setTriggerFetch={setTriggerFetch}
-                        userId={currentUser.uid}
-                        filterToMyTasks={true}
-                      />
+                      <div>
+                        <TaskList
+                          triggerFetch={triggerFetch}
+                          setTriggerFetch={setTriggerFetch}
+                          userId={currentUser.uid}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <Navigate to="/login" />
+                  )
+                }
+              />
+
+              <Route
+                path="/my-tasks"
+                element={
+                  currentUser && userData?.role === "manager" ? (
+                    <div className="min-h-screen bg-soft text-primary font-sans px-4 py-8 sm:py-12">
+                      <div className="max-w-2xl mx-auto">
+                        <header className="mb-10 text-center">
+                          <h1 className="text-3xl font-bold tracking-tight mb-3 sm:mb-2">
+                            My Tasks
+                          </h1>
+                          <div className="w-16 h-1 mx-auto bg-accent rounded"></div>
+                          <Link
+                            to="/"
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            ← Back to All Tasks
+                          </Link>
+                        </header>
+
+                        <TaskList
+                          triggerFetch={triggerFetch}
+                          setTriggerFetch={setTriggerFetch}
+                          userId={currentUser.uid}
+                          filterToMyTasks={true}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <Navigate to="/" />
-                )
-              }
-            />
+                  ) : (
+                    <Navigate to="/" />
+                  )
+                }
+              />
 
-            <Route
-              path="/employees"
-              element={
-                currentUser ? <EmployeeList /> : <Navigate to="/login" />
-              }
-            />
+              <Route
+                path="/employees"
+                element={
+                  currentUser ? <EmployeeList /> : <Navigate to="/login" />
+                }
+              />
 
-            <Route
-              path="/employees/:id"
-              element={
-                currentUser ? <EmployeeTasks /> : <Navigate to="/login" />
-              }
-            />
+              <Route
+                path="/employees/:id"
+                element={
+                  currentUser ? <EmployeeTasks /> : <Navigate to="/login" />
+                }
+              />
 
-            <Route
-              path="/task/:id"
-              element={
-                currentUser ? (
-                  <TaskDetailWithSettings userId={currentUser.uid} />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
+              <Route
+                path="/task/:id"
+                element={
+                  currentUser ? (
+                    <TaskDetailWithSettings userId={currentUser.uid} />
+                  ) : (
+                    <Navigate to="/login" />
+                  )
+                }
+              />
 
-            <Route
-              path="/settings"
-              element={currentUser ? <Settings /> : <Navigate to="/login" />}
-            />
-            <Route path="/schedule" element={<Schedule />} />
-            <Route
-              path="/login"
-              element={!currentUser ? <Login /> : <Navigate to="/" />}
-            />
-            <Route
-              path="/signup"
-              element={!currentUser ? <SignUp /> : <Navigate to="/" />}
-            />
-            <Route
-              path="/forgot-password"
-              element={!currentUser ? <ForgotPassword /> : <Navigate to="/" />}
-            />
-          </Routes>
+              <Route
+                path="/settings"
+                element={currentUser ? <Settings /> : <Navigate to="/login" />}
+              />
+              <Route path="/schedule" element={<Schedule />} />
+              <Route
+                path="/login"
+                element={!currentUser ? <Login /> : <Navigate to="/" />}
+              />
+              <Route
+                path="/signup"
+                element={!currentUser ? <SignUp /> : <Navigate to="/" />}
+              />
+              <Route
+                path="/forgot-password"
+                element={
+                  !currentUser ? <ForgotPassword /> : <Navigate to="/" />
+                }
+              />
+            </Routes>
+          </DataProvider>
         </div>
       </div>
     </Router>

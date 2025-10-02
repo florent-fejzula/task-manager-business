@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { Pencil } from "lucide-react";
-import { updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../../firebase/firebase";
 
-function TaskHeader({ task, taskRef, onUpdate }) {
+function TaskHeader({ task, onUpdate }) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [newTitle, setNewTitle] = useState(task.title);
 
   const handleTitleSave = async () => {
     if (!newTitle.trim()) return;
-    await updateDoc(taskRef, { title: newTitle });
+    const ref = doc(db, "tasks", task.id);
+    await updateDoc(ref, { title: newTitle });
     onUpdate({ title: newTitle });
     setEditingTitle(false);
   };

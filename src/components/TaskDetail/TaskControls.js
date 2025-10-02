@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../../firebase/firebase";
 import { useAuth } from "../../context/AuthContext";
 
-function TaskMetaControls({ task, taskRef, onUpdate }) {
+function TaskControls({ task, onUpdate }) {
   const { userData } = useAuth();
   const isManager = userData?.role === "manager";
 
@@ -16,7 +17,7 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
   const [timerError, setTimerError] = useState("");
 
   useEffect(() => {
-    if (!task.timerStart || !task.timerDuration) {
+    if (!task?.timerStart || !task?.timerDuration) {
       setTimeLeft(null);
       return;
     }
@@ -36,7 +37,7 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
     updateRemaining();
     const interval = setInterval(updateRemaining, 60000);
     return () => clearInterval(interval);
-  }, [task.timerStart, task.timerDuration]);
+  }, [task?.timerStart, task?.timerDuration]);
 
   const formatTimeLeft = (ms) => {
     const totalMins = Math.floor(ms / 60000);
@@ -50,19 +51,22 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
 
   const handleStatusChange = async (e) => {
     const newStatus = e.target.value;
-    await updateDoc(taskRef, { status: newStatus });
+    const ref = doc(db, "tasks", task.id);
+    await updateDoc(ref, { status: newStatus });
     onUpdate({ status: newStatus });
   };
 
   const handlePriorityChange = async (e) => {
     const newPriority = e.target.value;
-    await updateDoc(taskRef, { priority: newPriority });
+    const ref = doc(db, "tasks", task.id);
+    await updateDoc(ref, { priority: newPriority });
     onUpdate({ priority: newPriority });
   };
 
   const handleSetTimer = async (durationMs) => {
     const now = Date.now();
-    await updateDoc(taskRef, {
+    const ref = doc(db, "tasks", task.id);
+    await updateDoc(ref, {
       timerStart: now,
       timerDuration: durationMs,
       notified15min: false,
@@ -76,10 +80,8 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
   };
 
   const handleCancelTimer = async () => {
-    await updateDoc(taskRef, {
-      timerStart: null,
-      timerDuration: null,
-    });
+    const ref = doc(db, "tasks", task.id);
+    await updateDoc(ref, { timerStart: null, timerDuration: null });
     onUpdate({ timerStart: null, timerDuration: null });
     setTimeLeft(null);
     setTimerError("");
@@ -216,9 +218,7 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-600 mb-1">
-                Minutes
-              </label>
+              <label className="block text-xs text-gray-600 mb-1">Minutes</label>
               <input
                 type="number"
                 min={0}
@@ -254,4 +254,4 @@ function TaskMetaControls({ task, taskRef, onUpdate }) {
   );
 }
 
-export default TaskMetaControls;
+export default TaskControls;

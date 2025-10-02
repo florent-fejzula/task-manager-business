@@ -1,42 +1,38 @@
-import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  addDoc,
-  serverTimestamp,
-  doc,
-  getDoc,
-  where,
-} from "firebase/firestore";
-import { db } from "../firebase/firebase";
+import { useState, useEffect } from "react";
+import { collection, getDocs } from "firebase/firestore";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useData } from "../context/DataContext";
+import { db } from "../firebase/firebase";
 import TaskCard from "./TaskCard";
 import AddTaskForm from "./AddTaskForm";
 
-function TaskList({
-  triggerFetch,
-  filterToMyTasks = false,
-  overrideUserId = null,
-}) {
+function TaskList({ filterToMyTasks = false, overrideUserId = null }) {
   const { currentUser, userData } = useAuth();
-  const [tasks, setTasks] = useState([]);
+  const { tasks, settings, loading } = useData();
   const [showAddTask, setShowAddTask] = useState(false);
   const [showClosed, setShowClosed] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [userSettings, setUserSettings] = useState({});
+
   const [userList, setUserList] = useState([]);
   const userMap = Object.fromEntries(userList.map((u) => [u.uid, u.name]));
 
-  const grouped = {
-    todo: [],
-    "in-progress": [],
-    "on-hold": [],
-    done: [],
-  };
+  // 🔑 Fetch all users once (for managers)
+  useEffect(() => {
+    if (userData?.role === "manager") {
+      const fetchUsers = async () => {
+        const usersSnap = await getDocs(collection(db, "users"));
+        const users = usersSnap.docs.map((doc) => ({
+          uid: doc.id,
+          ...doc.data(),
+        }));
+        setUserList(users);
+      };
+      fetchUsers();
+    }
+  }, [userData?.role]);
 
+  // --- Group tasks by status ---
+  const grouped = { todo: [], "in-progress": [], "on-hold": [], done: [] };
   const statusLabels = {
     todo: "To Do",
     "in-progress": "In Progress",
@@ -44,121 +40,31 @@ function TaskList({
     done: "Closed",
   };
 
-  tasks.forEach((task) => {
+  let filtered = tasks;
+
+  // Apply manager vs employee filter
+  if (userData?.role !== "manager") {
+    filtered = filtered.filter((t) => t.assignedTo === currentUser?.uid);
+  } else {
+    if (overrideUserId) {
+      filtered = filtered.filter((t) => t.assignedTo === overrideUserId);
+    } else if (filterToMyTasks) {
+      filtered = filtered.filter((t) => t.assignedTo === currentUser?.uid);
+    }
+  }
+
+  // Group by status
+  filtered.forEach((task) => {
     grouped[task.status]?.push(task);
   });
 
-  const handleAddTask = async (
-    newTaskTitle,
-    newTaskStatus,
-    assignedTo,
-    comment
-  ) => {
-    try {
-      const docRef = await addDoc(collection(db, "tasks"), {
-        title: newTaskTitle,
-        status: newTaskStatus,
-        priority: "medium",
-        createdAt: serverTimestamp(),
-        subTasks: [],
-        assignedTo: assignedTo || currentUser.uid,
-        createdBy: currentUser.uid,
-        comment: comment || "", // add comment field here
-      });
-
-      console.log("🔥 Task added to Firestore with ID:", docRef.id);
-
-      setTasks((prev) => [
-        {
-          id: docRef.id,
-          title: newTaskTitle,
-          status: newTaskStatus,
-          priority: "medium",
-          subTasks: [],
-          assignedTo: assignedTo || currentUser.uid,
-          createdBy: currentUser.uid,
-          createdAt: new Date(),
-          comment: comment || "", // add to local state too
-        },
-        ...prev,
-      ]);
-      setShowAddTask(false);
-    } catch (err) {
-      console.error("Error adding task:", err);
-    }
+  // Sort by priority within each status
+  const sortByPriority = (a, b) => {
+    const weight = (p) => (p === "high" ? 0 : p === "medium" ? 1 : 2);
+    return weight(a.priority || "medium") - weight(b.priority || "medium");
   };
 
   const sortedStatuses = ["in-progress", "todo", "on-hold", "done"];
-
-  useEffect(() => {
-    const fetchTasksAndSettings = async () => {
-      try {
-        setLoading(true);
-
-        let q;
-        const tasksRef = collection(db, "tasks");
-
-        if (userData?.role === "manager") {
-          if (overrideUserId) {
-            q = query(tasksRef, where("assignedTo", "==", overrideUserId));
-          } else if (filterToMyTasks) {
-            q = query(tasksRef, where("assignedTo", "==", currentUser.uid));
-          } else {
-            q = query(tasksRef, orderBy("createdAt", "desc"));
-          }
-        } else {
-          q = query(tasksRef, where("assignedTo", "==", currentUser.uid));
-        }
-
-        const snapshot = await getDocs(q);
-        const tasksData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setTasks(tasksData);
-
-        // Fetch user settings
-        const settingsRef = doc(
-          db,
-          "users",
-          currentUser.uid,
-          "settings",
-          "preferences"
-        );
-        const settingsSnap = await getDoc(settingsRef);
-        if (settingsSnap.exists()) {
-          setUserSettings(settingsSnap.data());
-        } else {
-          setUserSettings({});
-        }
-
-        // Fetch all users (for assignment dropdown)
-        if (userData?.role === "manager") {
-          const usersSnap = await getDocs(collection(db, "users"));
-          const users = usersSnap.docs.map((doc) => ({
-            uid: doc.id,
-            ...doc.data(),
-          }));
-          setUserList(users);
-        }
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching tasks or settings:", err);
-        setLoading(false);
-      }
-    };
-
-    if (currentUser?.uid && userData?.role) {
-      fetchTasksAndSettings();
-    }
-  }, [
-    triggerFetch,
-    currentUser.uid,
-    userData,
-    filterToMyTasks,
-    overrideUserId,
-  ]);
 
   if (loading) {
     return (
@@ -181,7 +87,7 @@ function TaskList({
         )}
         {showAddTask && (
           <AddTaskForm
-            onAdd={handleAddTask}
+            onClose={() => setShowAddTask(false)} // ✅ new close callback
             users={userList}
             userData={userData}
           />
@@ -189,25 +95,15 @@ function TaskList({
       </div>
 
       {sortedStatuses.map((taskStatus) => {
-        let group = grouped[taskStatus];
+        let group = [...(grouped[taskStatus] || [])].sort(sortByPriority);
         const displayStatus = statusLabels[taskStatus] || taskStatus;
-
-        group = [...group].sort((a, b) => {
-          const getWeight = (priority) =>
-            priority === "high" ? 0 : priority === "medium" ? 1 : 2;
-          return (
-            getWeight(a.priority || "medium") -
-            getWeight(b.priority || "medium")
-          );
-        });
-
         const isClosed = taskStatus === "done";
 
         return (
           <div key={taskStatus} className="mb-10">
             <div
-              className={`text-accent font-serif italic text-lg mb-2 border-b border-gray-200 pb-1 flex justify-between items-center cursor-pointer ${
-                isClosed ? "hover:opacity-80" : ""
+              className={`text-accent font-serif italic text-lg mb-2 border-b border-gray-200 pb-1 flex justify-between items-center ${
+                isClosed ? "cursor-pointer hover:opacity-80" : ""
               }`}
               onClick={() => isClosed && setShowClosed((prev) => !prev)}
             >
@@ -232,23 +128,7 @@ function TaskList({
                     currentUser={currentUser}
                     userData={userData}
                     userMap={userMap}
-                    collapseSubtasks={userSettings?.collapseCompletedSubtasks}
-                    onStatusChange={(taskId, newStatus) =>
-                      setTasks((prev) =>
-                        prev.map((t) =>
-                          t.id === taskId ? { ...t, status: newStatus } : t
-                        )
-                      )
-                    }
-                    onSubTaskUpdate={(taskId, updatedSubTasks) =>
-                      setTasks((prev) =>
-                        prev.map((t) =>
-                          t.id === taskId
-                            ? { ...t, subTasks: updatedSubTasks }
-                            : t
-                        )
-                      )
-                    }
+                    collapseSubtasks={settings?.collapseCompletedSubtasks}
                   />
                 ))}
               </ul>
