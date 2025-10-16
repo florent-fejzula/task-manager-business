@@ -1,3 +1,4 @@
+// Schedule.js
 import { useEffect, useState } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Link } from "react-router-dom";
@@ -31,6 +32,7 @@ function Schedule() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // 🔹 Fetch schedule once (no DataContext)
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
@@ -62,29 +64,25 @@ function Schedule() {
     setSaving(true);
     try {
       await setDoc(doc(db, "schedule", "current"), schedule, { merge: true });
-      alert("Schedule saved!");
+      alert("✅ Schedule saved!");
     } catch (err) {
       console.error("Error saving schedule:", err);
-      alert("Failed to save schedule.");
+      alert("❌ Failed to save schedule.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleReset = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to reset the schedule?"
-    );
-    if (!confirmed) return;
-
+    if (!window.confirm("Are you sure you want to reset the schedule?")) return;
     setSaving(true);
     try {
-      await setDoc(doc(db, "schedule", "current"), {}); // clear Firestore
-      setSchedule({}); // clear local state
-      alert("Schedule reset successfully!");
+      await setDoc(doc(db, "schedule", "current"), {});
+      setSchedule({});
+      alert("✅ Schedule reset successfully!");
     } catch (err) {
       console.error("Error resetting schedule:", err);
-      alert("Failed to reset schedule.");
+      alert("❌ Failed to reset schedule.");
     } finally {
       setSaving(false);
     }
@@ -92,17 +90,15 @@ function Schedule() {
 
   const highlightUser = (text) => {
     if (!text || !currentUserName) return text;
-
     const parts = text.split(/,\s*/);
     return parts.map((name, i) => {
-      const trimmed = name.trim();
-      const isCurrentUser = trimmed
+      const isCurrent = name
+        .trim()
         .toLowerCase()
         .includes(currentUserName.toLowerCase());
-
       return (
-        <span key={i} className={isCurrentUser ? "font-bold text-black" : ""}>
-          {trimmed}
+        <span key={i} className={isCurrent ? "font-bold text-black" : ""}>
+          {name.trim()}
           {i < parts.length - 1 ? ", " : ""}
         </span>
       );
@@ -126,40 +122,59 @@ function Schedule() {
         </div>
       </h1>
 
+      {/* Show schedule instantly, highlight current day */}
       <div className="space-y-6 mb-10">
-        {days.map((day) => (
-          <div key={day}>
-            <h2 className="font-semibold mb-1" style={{ color: "#442ad7" }}>
-              {labels[day]}:
-            </h2>
-            <ul className="text-sm text-gray-800 ml-2 list-disc pl-4">
-              {day === "sunday" ? (
-                schedule[`${day}`] && (
-                  <li>{highlightUser(schedule[`${day}`])}</li>
-                )
-              ) : (
-                <>
-                  {schedule[`${day}1`] && (
-                    <li>1: {highlightUser(schedule[`${day}1`])}</li>
-                  )}
-                  {schedule[`${day}Mid`] && (
-                    <li>- {highlightUser(schedule[`${day}Mid`])}</li>
-                  )}
-                  {schedule[`${day}2`] && (
-                    <li>2: {highlightUser(schedule[`${day}2`])}</li>
-                  )}
-                </>
-              )}
-            </ul>
-          </div>
-        ))}
+        {days.map((day) => {
+          const today = new Date()
+            .toLocaleDateString("en-US", { weekday: "long" })
+            .toLowerCase();
+          const isToday = day === today;
+
+          return (
+            <div
+              key={day}
+              className={`rounded-lg p-3 transition ${
+                isToday
+                  ? "bg-indigo-50 border-l-4 border-indigo-600 shadow-sm"
+                  : "bg-transparent"
+              }`}
+            >
+              <h2
+                className={`font-semibold mb-1 ${
+                  isToday ? "text-indigo-700 text-lg" : "text-[#442ad7]"
+                }`}
+              >
+                {labels[day]}:
+              </h2>
+              <ul className="text-sm text-gray-800 ml-2 list-disc pl-4">
+                {day === "sunday" ? (
+                  schedule[day] && <li>{highlightUser(schedule[day])}</li>
+                ) : (
+                  <>
+                    {schedule[`${day}1`] && (
+                      <li>1: {highlightUser(schedule[`${day}1`])}</li>
+                    )}
+                    {schedule[`${day}Mid`] && (
+                      <li>- {highlightUser(schedule[`${day}Mid`])}</li>
+                    )}
+                    {schedule[`${day}2`] && (
+                      <li>2: {highlightUser(schedule[`${day}2`])}</li>
+                    )}
+                  </>
+                )}
+              </ul>
+            </div>
+          );
+        })}
       </div>
 
-      {
+      {/* Editable form for managers */}
+      {userData?.role === "manager" && (
         <form onSubmit={handleSubmit} className="space-y-8">
           <h2 className="text-xl font-semibold text-center mb-4">
             ✏️ Edit Schedule
           </h2>
+
           {days.map((day) => (
             <div key={day}>
               <label className="block font-medium mb-1">{labels[day]}</label>
@@ -178,7 +193,7 @@ function Schedule() {
                     value={schedule[`${day}1`] || ""}
                     onChange={(e) => handleChange(day, "1", e.target.value)}
                     className="border px-3 py-2 rounded text-sm"
-                    placeholder="1st shift (10-16)"
+                    placeholder="1st shift (10–16)"
                   />
                   <input
                     type="text"
@@ -192,7 +207,7 @@ function Schedule() {
                     value={schedule[`${day}2`] || ""}
                     onChange={(e) => handleChange(day, "2", e.target.value)}
                     className="border px-3 py-2 rounded text-sm"
-                    placeholder="2nd shift (16-22)"
+                    placeholder="2nd shift (16–22)"
                   />
                 </div>
               )}
@@ -214,7 +229,7 @@ function Schedule() {
             Reset Schedule
           </button>
         </form>
-      }
+      )}
     </div>
   );
 }

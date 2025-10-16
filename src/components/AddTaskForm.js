@@ -6,6 +6,10 @@ function AddTaskForm({ onAdd, users = [], userData }) {
   const [assignedTo, setAssignedTo] = useState("");
   const [comment, setComment] = useState("");
 
+  // 🔁 Recurring fields
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [intervalDays, setIntervalDays] = useState(7);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -14,13 +18,12 @@ function AddTaskForm({ onAdd, users = [], userData }) {
     setStatus("todo");
     setAssignedTo("");
     setComment("");
+    setIsRecurring(false);
+    setIntervalDays(7);
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mt-4 space-y-3 max-w-md mx-auto"
-    >
+    <form onSubmit={handleSubmit} className="mt-4 space-y-3 max-w-md mx-auto">
       <input
         type="text"
         value={title}
@@ -65,6 +68,32 @@ function AddTaskForm({ onAdd, users = [], userData }) {
           />
         </>
       )}
+
+      {/* 🔁 Recurring UI */}
+      <div className="border p-3 rounded-md">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isRecurring}
+            onChange={(e) => setIsRecurring(e.target.checked)}
+          />
+          <span className="text-sm font-medium">Make this task recurring</span>
+        </label>
+
+        {isRecurring && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-sm">Every</span>
+            <input
+              type="number"
+              min="1"
+              className="w-20 border px-2 py-1 rounded text-sm"
+              value={intervalDays}
+              onChange={(e) => setIntervalDays(Number(e.target.value))}
+            />
+            <span className="text-sm">days</span>
+          </div>
+        )}
+      </div>
 
       <button
         type="submit"
