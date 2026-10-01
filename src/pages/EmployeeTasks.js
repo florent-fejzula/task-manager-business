@@ -1,5 +1,6 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import TaskList from "../components/TaskList";
+import PageHeader from "../components/PageHeader";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
@@ -28,28 +29,18 @@ function EmployeeTasks() {
   }
 
   return (
-    <div className="min-h-screen bg-soft text-primary font-sans px-4 py-8 sm:py-12">
-      <div className="max-w-2xl mx-auto">
-        <header className="mb-10 text-center">
-          <h1 className="text-3xl font-bold tracking-tight mb-3 sm:mb-2">
-            {employeeName ? `${employeeName}'s Tasks` : "Loading..."}
-          </h1>
-          <div className="w-16 h-1 mx-auto bg-accent rounded"></div>
-          <Link
-            to="/employees"
-            className="text-sm text-blue-600 hover:underline"
-          >
-            ← Back to Employee List
-          </Link>
-        </header>
-
-        <TaskList
-          overrideUserId={id}
-          triggerFetch={false}
-          setTriggerFetch={() => {}}
-        />
-      </div>
-    </div>
+    <>
+      <PageHeader
+        title={employeeName ? `${employeeName}'s Tasks` : "Loading..."}
+        backTo="/employees"
+        backLabel="← Back to Employee List"
+      />
+      <TaskList
+        overrideUserId={id}
+        triggerFetch={false}
+        setTriggerFetch={() => {}}
+      />
+    </>
   );
 }
 

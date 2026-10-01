@@ -63,9 +63,9 @@ function TaskDetail({ collapseSubtasks = false }) {
 
   return (
     <div
-      className={`bg-white shadow-md rounded-lg p-6 sm:p-8 max-w-xl mx-auto mt-8 border ${priorityClass}`}
+      className={`bg-white shadow-md rounded-lg p-4 sm:p-6 max-w-xl mx-auto mt-2 border ${priorityClass}`}
     >
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-3">
         <Link to="/" className="text-sm text-blue-600 hover:underline">
           ← Back
         </Link>
@@ -87,7 +87,7 @@ function TaskDetail({ collapseSubtasks = false }) {
 
       {/* Manager-only reassignment dropdown */}
       {isManager && (
-        <div className="my-4">
+        <div className="my-3">
           <label className="block text-sm font-medium mb-1">Reassign Task:</label>
           <select
             value={task.assignedTo}

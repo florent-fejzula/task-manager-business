@@ -1,8 +1,8 @@
 // Schedule.js
 import { useEffect, useState } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { Link } from "react-router-dom";
 import { db } from "../firebase/firebase";
+import PageHeader from "../components/PageHeader";
 import { useAuth } from "../context/AuthContext";
 
 const days = [
@@ -112,18 +112,15 @@ function Schedule() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold mb-6 text-center">
-        📅 Weekly Schedule
-        <div>
-          <Link to="/" className="text-sm text-blue-600 hover:underline">
-            ← Back to All Tasks
-          </Link>
-        </div>
-      </h1>
+    <div className="max-w-3xl mx-auto">
+      <PageHeader
+        title="📅 Weekly Schedule"
+        backTo="/"
+        backLabel="← Back to All Tasks"
+      />
 
       {/* Show schedule instantly, highlight current day */}
-      <div className="space-y-6 mb-10">
+      <div className="space-y-1.5 mb-6">
         {days.map((day) => {
           const today = new Date()
             .toLocaleDateString("en-US", { weekday: "long" })
@@ -133,7 +130,7 @@ function Schedule() {
           return (
             <div
               key={day}
-              className={`rounded-lg p-3 transition ${
+              className={`rounded-lg p-2.5 transition ${
                 isToday
                   ? "bg-indigo-50 border-l-4 border-indigo-600 shadow-sm"
                   : "bg-transparent"
@@ -170,8 +167,8 @@ function Schedule() {
 
       {/* Editable form for managers */}
       {userData?.role === "manager" && (
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <h2 className="text-xl font-semibold text-center mb-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <h2 className="text-lg font-semibold text-center mb-2">
             ✏️ Edit Schedule
           </h2>
 

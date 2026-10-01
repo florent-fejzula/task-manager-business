@@ -32,8 +32,8 @@ function Settings() {
   if (loading) return <p className="text-center">Loading settings...</p>;
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-6 bg-white shadow rounded">
-      <h1 className="text-2xl font-bold mb-4">Settings</h1>
+    <div className="max-w-xl mx-auto mt-2 p-4 bg-white shadow rounded">
+      <h1 className="text-xl font-bold mb-3">Settings</h1>
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-gray-700">
           Don't Collapse Completed Subtasks

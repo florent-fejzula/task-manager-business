@@ -48,7 +48,7 @@ function SubtaskList({ task, taskRef, onUpdate, collapseSubtasks }) {
   };
 
   return (
-    <div className="mb-6">
+    <div className="mb-4">
       <ul className="space-y-2">
         {task.subTasks?.map((sub, index) =>
           !sub.done ? (
@@ -117,7 +117,7 @@ function SubtaskList({ task, taskRef, onUpdate, collapseSubtasks }) {
           )}
       </ul>
 
-      <form onSubmit={handleAddSubtask} className="flex gap-2 mt-4">
+      <form onSubmit={handleAddSubtask} className="flex gap-2 mt-3">
         <input
           type="text"
           value={newSubtask}

@@ -22,9 +22,9 @@ function SignUp() {
   };
 
   return (
-    <div className="max-w-sm mx-auto py-10 px-4">
-      <h2 className="text-2xl font-bold mb-6 text-center">Sign Up</h2>
-      <form onSubmit={handleSignUp} className="space-y-4">
+    <div className="max-w-sm mx-auto py-4 sm:py-10">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center">Sign Up</h2>
+      <form onSubmit={handleSignUp} className="space-y-3">
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <input
           type="email"

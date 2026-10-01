@@ -13,6 +13,7 @@ function TaskCard({
 }) {
   const [showDoneSubTasks, setShowDoneSubTasks] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
+  const [showSubForm, setShowSubForm] = useState(false);
 
   useEffect(() => {
     if (typeof collapseSubtasks === "boolean") {
@@ -114,7 +115,7 @@ function TaskCard({
 
   return (
     <li
-      className={`bg-white shadow-md rounded-xl p-4 border-2 ${
+      className={`bg-white shadow-md rounded-xl p-3 border-2 ${
         task.priority === "high"
           ? "border-red-600 bg-red-50"
           : task.priority === "low"
@@ -122,9 +123,9 @@ function TaskCard({
           : "border-gray-200"
       }`}
     >
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex justify-between items-center gap-2 mb-1">
         <Link to={`/task/${task.id}`} className="hover:underline">
-          <strong className="text-lg font-semibold">{task.title}</strong>
+          <strong className="text-base font-semibold">{task.title}</strong>
         </Link>
         <select
           value={task.status}
@@ -146,19 +147,19 @@ function TaskCard({
       ) : null}
 
       {userData?.role === "manager" && (
-        <p className="text-sm italic text-gray-500 ml-1 mt-1">
+        <p className="text-xs italic text-gray-500 mb-1">
           ({userMap?.[task.assignedTo] || "Unknown"})
         </p>
       )}
 
       {/* Comment */}
       {task.comment && (
-        <p className="text-sm text-gray-700 mb-3 ml-1">• {task.comment}</p>
+        <p className="text-sm text-gray-700 mb-2">• {task.comment}</p>
       )}
 
       {/* Timer display */}
       {timeLeft && (
-        <div className="text-sm text-orange-600 mb-2 font-medium italic">
+        <div className="text-sm text-orange-600 mb-1.5 font-medium italic">
           ⏳ {formatTimeLeft(timeLeft)} left
         </div>
       )}
@@ -252,23 +253,43 @@ function TaskCard({
         </ul>
       )}
 
-      <form
-        onSubmit={handleAddSubTask}
-        className="mt-3 flex items-center gap-2"
-      >
-        <input
-          type="text"
-          name={`sub-${task.id}`}
-          placeholder="Add sub-task..."
-          className="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-accent text-sm"
-        />
-        <button
-          type="submit"
-          className="bg-accent text-white px-4 py-2 rounded-md text-sm hover:bg-accent-dark"
+      {showSubForm ? (
+        <form
+          onSubmit={handleAddSubTask}
+          className="mt-2 flex items-center gap-2"
         >
-          Add
+          <input
+            type="text"
+            name={`sub-${task.id}`}
+            placeholder="Add sub-task..."
+            autoFocus
+            onKeyDown={(e) => e.key === "Escape" && setShowSubForm(false)}
+            className="flex-grow px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-accent text-sm"
+          />
+          <button
+            type="submit"
+            className="bg-accent text-white px-3 py-1.5 rounded-md text-sm hover:bg-accent-dark"
+          >
+            Add
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSubForm(false)}
+            aria-label="Close sub-task form"
+            className="text-gray-400 hover:text-gray-600 text-lg px-1"
+          >
+            ×
+          </button>
+        </form>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowSubForm(true)}
+          className="mt-1.5 text-xs text-accent hover:underline"
+        >
+          + Add sub-task
         </button>
-      </form>
+      )}
     </li>
   );
 }

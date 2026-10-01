@@ -170,7 +170,7 @@ function TaskList({
 
   return (
     <div>
-      <div className="text-center mb-4">
+      <div className="text-center mb-3">
         {!showAddTask && (
           <button
             onClick={() => setShowAddTask(true)}
@@ -188,6 +188,10 @@ function TaskList({
         )}
       </div>
 
+      {tasks.length === 0 && (
+        <p className="text-center text-sm text-gray-500 mt-6">No tasks yet.</p>
+      )}
+
       {sortedStatuses.map((taskStatus) => {
         let group = grouped[taskStatus];
         const displayStatus = statusLabels[taskStatus] || taskStatus;
@@ -203,10 +207,13 @@ function TaskList({
 
         const isClosed = taskStatus === "done";
 
+        // Empty sections only add dead space above the real content
+        if (group.length === 0) return null;
+
         return (
-          <div key={taskStatus} className="mb-10">
+          <div key={taskStatus} className="mb-4">
             <div
-              className={`text-accent font-serif italic text-lg mb-2 border-b border-gray-200 pb-1 flex justify-between items-center cursor-pointer ${
+              className={`text-accent font-serif italic text-base mb-1.5 border-b border-gray-200 pb-1 flex justify-between items-center cursor-pointer ${
                 isClosed ? "hover:opacity-80" : ""
               }`}
               onClick={() => isClosed && setShowClosed((prev) => !prev)}
@@ -224,7 +231,7 @@ function TaskList({
             </div>
 
             {(!isClosed || showClosed) && (
-              <ul className="space-y-4">
+              <ul className="space-y-2.5">
                 {group.map((task) => (
                   <TaskCard
                     key={task.id}

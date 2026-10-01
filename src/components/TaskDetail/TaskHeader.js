@@ -14,7 +14,7 @@ function TaskHeader({ task, taskRef, onUpdate }) {
   };
 
   return (
-    <div className="mb-6 flex items-center justify-between">
+    <div className="mb-3 flex items-center justify-between">
       {editingTitle ? (
         <div className="flex-grow flex gap-2">
           <input

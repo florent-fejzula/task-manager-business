@@ -3,6 +3,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import PageHeader from "../components/PageHeader";
 
 function EmployeeList() {
   const { userData } = useAuth();
@@ -32,19 +33,18 @@ function EmployeeList() {
   }
 
   return (
-    <div className="max-w-xl text-center mx-auto mt-10">
-      <h1 className="text-2xl font-bold mb-6 text-center">
-        👥 Employee Profiles
-      </h1>
-      <Link to="/" className="text-sm text-blue-600 hover:underline">
-        ← Back to All Tasks
-      </Link>
-      <ul className="space-y-4 mt-6">
+    <div className="max-w-xl text-center mx-auto">
+      <PageHeader
+        title="👥 Employee Profiles"
+        backTo="/"
+        backLabel="← Back to All Tasks"
+      />
+      <ul className="space-y-2">
         {employees.map((emp) => (
           <li key={emp.id}>
             <Link
               to={`/employees/${emp.id}`}
-              className="block border p-4 rounded shadow-sm hover:bg-gray-100 transition"
+              className="block border p-3 rounded shadow-sm hover:bg-gray-100 transition"
             >
               <div className="flex justify-between items-center">
                 <span className="font-medium">{emp.name || emp.email}</span>

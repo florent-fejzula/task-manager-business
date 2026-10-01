@@ -10,9 +10,9 @@ function SideMenu() {
   return (
     <>
       {/* Always Visible Hamburger Button */}
-      <div className="flex mb-4">
+      <div className="flex mb-1 sm:mb-3">
         <button
-          className="text-2xl px-2 py-1 rounded hover:bg-gray-200"
+          className="text-xl px-2 py-0.5 rounded hover:bg-gray-200"
           onClick={() => setOpen(true)}
         >
           ☰

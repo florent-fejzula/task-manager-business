@@ -23,9 +23,9 @@ function ForgotPassword() {
   };
 
   return (
-    <div className="max-w-sm mx-auto py-10 px-4">
-      <h2 className="text-2xl font-bold mb-6 text-center">Reset Password</h2>
-      <form onSubmit={handleReset} className="space-y-4">
+    <div className="max-w-sm mx-auto py-4 sm:py-10">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center">Reset Password</h2>
+      <form onSubmit={handleReset} className="space-y-3">
         {message && <p className="text-green-600 text-sm">{message}</p>}
         {error && <p className="text-red-500 text-sm">{error}</p>}
 

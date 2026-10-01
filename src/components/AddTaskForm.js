@@ -23,7 +23,7 @@ function AddTaskForm({ onAdd, users = [], userData }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 space-y-3 max-w-md mx-auto">
+    <form onSubmit={handleSubmit} className="mt-2 space-y-2 max-w-md mx-auto">
       <input
         type="text"
         value={title}

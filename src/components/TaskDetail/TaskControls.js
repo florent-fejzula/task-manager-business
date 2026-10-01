@@ -155,7 +155,7 @@ function TaskControls({ task, taskRef, onUpdate }) {
   };
 
   return (
-    <div className="flex flex-col gap-4 mb-6">
+    <div className="flex flex-col gap-3 mb-4">
       {/* Status + Priority row */}
       <div className="flex gap-4 flex-wrap">
         <select
@@ -297,7 +297,7 @@ function TaskControls({ task, taskRef, onUpdate }) {
       </div>
 
       {/* 🔁 Recurring controls (any user) */}
-      <div className="mt-2 border rounded p-3">
+      <div className="border rounded p-2.5">
         <label className="flex items-center gap-2">
           <input
             type="checkbox"

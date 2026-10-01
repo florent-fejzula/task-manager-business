@@ -24,6 +24,7 @@ import Schedule from "./pages/Schedule";
 import Settings from "./pages/Settings";
 import EmployeeList from "./pages/EmployeeList";
 import EmployeeTasks from "./pages/EmployeeTasks";
+import PageHeader from "./components/PageHeader";
 
 function TaskDetailWithSettings({ userId }) {
   const [settings, setSettings] = useState(null);
@@ -76,7 +77,7 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-soft text-primary font-sans px-4 py-8 sm:py-12">
+      <div className="min-h-screen bg-soft text-primary font-sans px-3 py-3 sm:px-4 sm:py-6">
         <SideMenu />
         <div className="max-w-2xl mx-auto">
           <Routes>
@@ -85,33 +86,27 @@ function App() {
               element={
                 currentUser ? (
                   <>
-                    <header className="mb-6 text-center">
-                      <h1 className="text-4xl font-bold tracking-tight mb-3 sm:mb-2">
-                        Task Manager B1.2
-                      </h1>
-                      <div className="w-16 h-1 mx-auto bg-accent rounded"></div>
-                      <p className="mt-2 text-sm text-gray-500">
-                        Stay on top of your goals, one task at a time.
-                      </p>
-                      <div className="text-right mt-4 flex items-center gap-4">
-                        {userData?.role === "manager" && (
-                          <>
-                            <Link
-                              to="/my-tasks"
-                              className="text-sm text-blue-600 hover:underline"
-                            >
-                              My Tasks
-                            </Link>
-                            <Link
-                              to="/employees"
-                              className="text-sm text-blue-600 hover:underline"
-                            >
-                              Employees
-                            </Link>
-                          </>
-                        )}
-                      </div>
-                    </header>
+                    <PageHeader
+                      title="Task Manager B1.2"
+                      subtitle="Stay on top of your goals, one task at a time."
+                    >
+                      {userData?.role === "manager" && (
+                        <div className="mt-1.5 flex items-center justify-center gap-4">
+                          <Link
+                            to="/my-tasks"
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            My Tasks
+                          </Link>
+                          <Link
+                            to="/employees"
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            Employees
+                          </Link>
+                        </div>
+                      )}
+                    </PageHeader>
 
                     <div>
                       <TaskList
@@ -131,29 +126,19 @@ function App() {
               path="/my-tasks"
               element={
                 currentUser && userData?.role === "manager" ? (
-                  <div className="min-h-screen bg-soft text-primary font-sans px-4 py-8 sm:py-12">
-                    <div className="max-w-2xl mx-auto">
-                      <header className="mb-10 text-center">
-                        <h1 className="text-3xl font-bold tracking-tight mb-3 sm:mb-2">
-                          My Tasks
-                        </h1>
-                        <div className="w-16 h-1 mx-auto bg-accent rounded"></div>
-                        <Link
-                          to="/"
-                          className="text-sm text-blue-600 hover:underline"
-                        >
-                          ← Back to All Tasks
-                        </Link>
-                      </header>
-
-                      <TaskList
-                        triggerFetch={triggerFetch}
-                        setTriggerFetch={setTriggerFetch}
-                        userId={currentUser.uid}
-                        filterToMyTasks={true}
-                      />
-                    </div>
-                  </div>
+                  <>
+                    <PageHeader
+                      title="My Tasks"
+                      backTo="/"
+                      backLabel="← Back to All Tasks"
+                    />
+                    <TaskList
+                      triggerFetch={triggerFetch}
+                      setTriggerFetch={setTriggerFetch}
+                      userId={currentUser.uid}
+                      filterToMyTasks={true}
+                    />
+                  </>
                 ) : (
                   <Navigate to="/" />
                 )
