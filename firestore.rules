@@ -1,19 +1,59 @@
 rules_version = '2';
 
+// Internal app: everyone signs in, managers run things, employees work on
+// their own tasks. Cloud Functions use the Admin SDK and bypass these rules.
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Firestore database will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Firestore database will be denied until you Update
-    // your rules
-    match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2025, 12, 31);
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isManager() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager';
+    }
+
+    // Profiles (name, role) are created by hand in the console, never by the
+    // app, so nobody can grant themselves the manager role from the client.
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow write: if false;
+
+      // Per-user preferences and push-notification tokens
+      match /settings/{doc} {
+        allow read, write: if isOwner(uid);
+      }
+      match /tokens/{token} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    match /tasks/{taskId} {
+      allow read: if isManager()
+        || (signedIn() && resource.data.assignedTo == request.auth.uid);
+
+      // Employees can add tasks for themselves only
+      allow create: if isManager()
+        || (signedIn() && request.resource.data.assignedTo == request.auth.uid);
+
+      // Employees can edit their own tasks but not hand them to someone else
+      allow update: if isManager()
+        || (signedIn()
+            && resource.data.assignedTo == request.auth.uid
+            && request.resource.data.assignedTo == request.auth.uid);
+
+      allow delete: if isManager();
+    }
+
+    match /schedule/{doc} {
+      allow read: if signedIn();
+      allow write: if isManager();
     }
   }
 }
