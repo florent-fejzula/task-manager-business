@@ -205,6 +205,8 @@ exports.handleRecurringTasks = onSchedule("every day 00:05", async () => {
       const newDoc = {
         title: `${task.title} (${formatTitleDate(nowDate)})`,
         status: "todo",
+        // each occurrence gets completed and closed, unlike a fixed task
+        type: "one-time",
         priority: task.priority || "medium",
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         subTasks: Array.isArray(task.subTasks) ?

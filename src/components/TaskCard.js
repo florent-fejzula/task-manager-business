@@ -10,6 +10,7 @@ function TaskCard({
   onStatusChange,
   onSubTaskUpdate,
   collapseSubtasks,
+  hideStatus = false,
 }) {
   const [showDoneSubTasks, setShowDoneSubTasks] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
@@ -61,7 +62,7 @@ function TaskCard({
     const newStatus = e.target.value;
     try {
       const taskRef = doc(db, "tasks", task.id);
-      await updateDoc(taskRef, { status: newStatus });
+      await updateDoc(taskRef, { status: newStatus, type: "one-time" });
       onStatusChange(task.id, newStatus);
     } catch (err) {
       console.error("Error updating status:", err);
@@ -127,16 +128,18 @@ function TaskCard({
         <Link to={`/task/${task.id}`} className="hover:underline">
           <strong className="text-base font-semibold">{task.title}</strong>
         </Link>
-        <select
-          value={task.status}
-          onChange={handleStatusChange}
-          className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none"
-        >
-          <option value="todo">To Do</option>
-          <option value="in-progress">In Progress</option>
-          <option value="on-hold">On Hold</option>
-          <option value="done">Closed</option>
-        </select>
+        {!hideStatus && (
+          <select
+            value={task.status}
+            onChange={handleStatusChange}
+            className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none"
+          >
+            <option value="todo">To Do</option>
+            <option value="in-progress">In Progress</option>
+            <option value="on-hold">On Hold</option>
+            <option value="done">Closed</option>
+          </select>
+        )}
       </div>
 
       {task.recurring && task.recurringInterval ? (

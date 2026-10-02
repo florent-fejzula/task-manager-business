@@ -15,6 +15,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import TaskCard from "./TaskCard";
 import AddTaskForm from "./AddTaskForm";
+import { isFixedTask } from "../utils/taskType";
 
 function TaskList({
   triggerFetch,
@@ -25,6 +26,11 @@ function TaskList({
   const [tasks, setTasks] = useState([]);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showClosed, setShowClosed] = useState(false);
+  // The manager's everyone-view would otherwise open with every employee's
+  // standing tasks, burying the one-time work
+  const [showFixed, setShowFixed] = useState(
+    !(userData?.role === "manager" && !filterToMyTasks && !overrideUserId)
+  );
   const [loading, setLoading] = useState(true);
   const [userSettings, setUserSettings] = useState({});
   const [userList, setUserList] = useState([]);
@@ -44,20 +50,30 @@ function TaskList({
     done: "Closed",
   };
 
+  const getWeight = (priority) =>
+    priority === "high" ? 0 : priority === "medium" ? 1 : 2;
+  const byPriority = (a, b) =>
+    getWeight(a.priority || "medium") - getWeight(b.priority || "medium");
+
+  const fixedTasks = tasks.filter(isFixedTask).sort(byPriority);
   tasks.forEach((task) => {
-    grouped[task.status]?.push(task);
+    if (!isFixedTask(task)) grouped[task.status]?.push(task);
   });
 
   const handleAddTask = async (
     newTaskTitle,
     newTaskStatus,
     assignedTo,
-    comment
+    comment,
+    type = "one-time"
   ) => {
+    // Fixed tasks are a standing list, so they never move through statuses
+    const status = type === "fixed" ? "todo" : newTaskStatus;
     try {
       const docRef = await addDoc(collection(db, "tasks"), {
         title: newTaskTitle,
-        status: newTaskStatus,
+        status,
+        type,
         priority: "medium",
         createdAt: serverTimestamp(),
         subTasks: [],
@@ -72,7 +88,8 @@ function TaskList({
         {
           id: docRef.id,
           title: newTaskTitle,
-          status: newTaskStatus,
+          status,
+          type,
           priority: "medium",
           subTasks: [],
           assignedTo: assignedTo || currentUser.uid,
@@ -160,6 +177,33 @@ function TaskList({
     overrideUserId,
   ]);
 
+  const renderCard = (task) => (
+    <TaskCard
+      key={task.id}
+      task={task}
+      currentUser={currentUser}
+      userData={userData}
+      userMap={userMap}
+      hideStatus={isFixedTask(task)}
+      collapseSubtasks={userSettings?.collapseCompletedSubtasks}
+      onStatusChange={(taskId, newStatus) =>
+        setTasks((prev) =>
+          prev.map((t) =>
+            // moving through statuses makes it a one-time task for good
+            t.id === taskId ? { ...t, status: newStatus, type: "one-time" } : t
+          )
+        )
+      }
+      onSubTaskUpdate={(taskId, updatedSubTasks) =>
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === taskId ? { ...t, subTasks: updatedSubTasks } : t
+          )
+        )
+      }
+    />
+  );
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -192,18 +236,30 @@ function TaskList({
         <p className="text-center text-sm text-gray-500 mt-6">No tasks yet.</p>
       )}
 
+      {fixedTasks.length > 0 && (
+        <div className="mb-4">
+          <div
+            className="text-accent font-serif italic text-base mb-1.5 border-b border-gray-200 pb-1 flex justify-between items-center cursor-pointer hover:opacity-80"
+            onClick={() => setShowFixed((prev) => !prev)}
+          >
+            <span>Fixed tasks ({fixedTasks.length})</span>
+            {showFixed ? (
+              <ChevronUp className="w-4 h-4 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-500" />
+            )}
+          </div>
+          {showFixed && (
+            <ul className="space-y-2.5">{fixedTasks.map(renderCard)}</ul>
+          )}
+        </div>
+      )}
+
       {sortedStatuses.map((taskStatus) => {
         let group = grouped[taskStatus];
         const displayStatus = statusLabels[taskStatus] || taskStatus;
 
-        group = [...group].sort((a, b) => {
-          const getWeight = (priority) =>
-            priority === "high" ? 0 : priority === "medium" ? 1 : 2;
-          return (
-            getWeight(a.priority || "medium") -
-            getWeight(b.priority || "medium")
-          );
-        });
+        group = [...group].sort(byPriority);
 
         const isClosed = taskStatus === "done";
 
@@ -232,32 +288,7 @@ function TaskList({
 
             {(!isClosed || showClosed) && (
               <ul className="space-y-2.5">
-                {group.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    currentUser={currentUser}
-                    userData={userData}
-                    userMap={userMap}
-                    collapseSubtasks={userSettings?.collapseCompletedSubtasks}
-                    onStatusChange={(taskId, newStatus) =>
-                      setTasks((prev) =>
-                        prev.map((t) =>
-                          t.id === taskId ? { ...t, status: newStatus } : t
-                        )
-                      )
-                    }
-                    onSubTaskUpdate={(taskId, updatedSubTasks) =>
-                      setTasks((prev) =>
-                        prev.map((t) =>
-                          t.id === taskId
-                            ? { ...t, subTasks: updatedSubTasks }
-                            : t
-                        )
-                      )
-                    }
-                  />
-                ))}
+                {group.map(renderCard)}
               </ul>
             )}
           </div>

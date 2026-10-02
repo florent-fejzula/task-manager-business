@@ -5,6 +5,7 @@ function AddTaskForm({ onAdd, users = [], userData }) {
   const [status, setStatus] = useState("todo");
   const [assignedTo, setAssignedTo] = useState("");
   const [comment, setComment] = useState("");
+  const [type, setType] = useState("one-time");
 
   // 🔁 Recurring fields
   const [isRecurring, setIsRecurring] = useState(false);
@@ -13,7 +14,7 @@ function AddTaskForm({ onAdd, users = [], userData }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title.trim()) return;
-    onAdd(title, status, assignedTo || null, comment.trim() || null);
+    onAdd(title, status, assignedTo || null, comment.trim() || null, type);
     setTitle("");
     setStatus("todo");
     setAssignedTo("");
@@ -32,16 +33,36 @@ function AddTaskForm({ onAdd, users = [], userData }) {
         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-accent"
       />
 
-      <select
-        value={status}
-        onChange={(e) => setStatus(e.target.value)}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-accent"
-      >
-        <option value="todo">To Do</option>
-        <option value="in-progress">In Progress</option>
-        <option value="on-hold">On Hold</option>
-        <option value="done">Closed</option>
-      </select>
+      <div className="grid grid-cols-2 gap-1 rounded-md bg-gray-100 p-1 text-sm">
+        {[
+          ["one-time", "One-time"],
+          ["fixed", "Fixed (always do)"],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setType(value)}
+            className={`rounded py-1.5 ${
+              type === value ? "bg-white shadow-sm font-medium" : "text-gray-500"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {type === "one-time" && (
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-accent"
+        >
+          <option value="todo">To Do</option>
+          <option value="in-progress">In Progress</option>
+          <option value="on-hold">On Hold</option>
+          <option value="done">Closed</option>
+        </select>
+      )}
 
       {userData?.role === "manager" && (
         <>
@@ -70,6 +91,7 @@ function AddTaskForm({ onAdd, users = [], userData }) {
       )}
 
       {/* 🔁 Recurring UI */}
+      {type === "one-time" && (
       <div className="border p-3 rounded-md">
         <label className="flex items-center gap-2">
           <input
@@ -94,6 +116,7 @@ function AddTaskForm({ onAdd, users = [], userData }) {
           </div>
         )}
       </div>
+      )}
 
       <button
         type="submit"

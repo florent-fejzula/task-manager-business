@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, deleteDoc, getDocs, collection, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase/firebase";
 import { useAuth } from "../../context/AuthContext";
+import { taskType } from "../../utils/taskType";
 import TaskHeader from "./TaskHeader";
 import SubtaskList from "../SubtaskList";
 import DeleteConfirmModal from "./DeleteConfirmModal";
@@ -104,6 +105,27 @@ function TaskDetail({ collapseSubtasks = false }) {
                 {user.name}
               </option>
             ))}
+          </select>
+        </div>
+      )}
+
+      {/* Manager-only: fixed (standing) vs one-time */}
+      {isManager && (
+        <div className="my-3">
+          <label className="block text-sm font-medium mb-1">Task type:</label>
+          <select
+            value={taskType(task)}
+            onChange={async (e) => {
+              const type = e.target.value;
+              // fixed tasks have no status of their own
+              const updates = type === "fixed" ? { type, status: "todo" } : { type };
+              await updateDoc(taskRef, updates);
+              handleUpdateTask(updates);
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-accent"
+          >
+            <option value="one-time">One-time</option>
+            <option value="fixed">Fixed (always do)</option>
           </select>
         </div>
       )}

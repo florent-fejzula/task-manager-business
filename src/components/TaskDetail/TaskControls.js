@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { updateDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase/firebase";
 import { useAuth } from "../../context/AuthContext";
+import { isFixedTask } from "../../utils/taskType";
 
 function TaskControls({ task, taskRef, onUpdate }) {
   const { userData } = useAuth();
   const isManager = userData?.role === "manager";
+  const isFixed = isFixedTask(task);
 
   const [timeLeft, setTimeLeft] = useState(null);
 
@@ -62,8 +64,9 @@ function TaskControls({ task, taskRef, onUpdate }) {
 
   const handleStatusChange = async (e) => {
     const newStatus = e.target.value;
-    await updateDoc(taskRef, { status: newStatus });
-    onUpdate({ status: newStatus });
+    // moving through statuses makes it a one-time task for good
+    await updateDoc(taskRef, { status: newStatus, type: "one-time" });
+    onUpdate({ status: newStatus, type: "one-time" });
   };
 
   const handlePriorityChange = async (e) => {
@@ -158,16 +161,18 @@ function TaskControls({ task, taskRef, onUpdate }) {
     <div className="flex flex-col gap-3 mb-4">
       {/* Status + Priority row */}
       <div className="flex gap-4 flex-wrap">
-        <select
-          value={task.status}
-          onChange={handleStatusChange}
-          className="border border-gray-300 rounded px-3 py-1"
-        >
-          <option value="todo">To Do</option>
-          <option value="in-progress">In Progress</option>
-          <option value="on-hold">On Hold</option>
-          <option value="done">Closed</option>
-        </select>
+        {!isFixed && (
+          <select
+            value={task.status}
+            onChange={handleStatusChange}
+            className="border border-gray-300 rounded px-3 py-1"
+          >
+            <option value="todo">To Do</option>
+            <option value="in-progress">In Progress</option>
+            <option value="on-hold">On Hold</option>
+            <option value="done">Closed</option>
+          </select>
+        )}
 
         <select
           value={task.priority || "medium"}
@@ -296,7 +301,8 @@ function TaskControls({ task, taskRef, onUpdate }) {
         {timerError && <div className="text-xs text-red-600">{timerError}</div>}
       </div>
 
-      {/* 🔁 Recurring controls (any user) */}
+      {/* 🔁 Recurring controls (any user) - one-time tasks only */}
+      {!isFixed && (
       <div className="border rounded p-2.5">
         <label className="flex items-center gap-2">
           <input
@@ -322,6 +328,7 @@ function TaskControls({ task, taskRef, onUpdate }) {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
