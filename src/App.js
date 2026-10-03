@@ -7,12 +7,9 @@ import {
   Link,
 } from "react-router-dom";
 
-import { onMessage } from "firebase/messaging";
-import { messaging } from "./firebase/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase/firebase";
 import { useAuth } from "./context/AuthContext";
-import { requestNotificationPermission } from "./firebase/fcm";
 
 import SideMenu from "./pages/sideMenu";
 import TaskList from "./components/TaskList";
@@ -54,26 +51,6 @@ function TaskDetailWithSettings({ userId }) {
 function App() {
   const [triggerFetch, setTriggerFetch] = useState(false);
   const { currentUser, userData } = useAuth();
-
-  // ✅ Notifications
-  useEffect(() => {
-    if (!currentUser) return;
-
-    requestNotificationPermission(currentUser.uid);
-
-    const unsubscribe = onMessage(messaging, (payload) => {
-      console.log("📩 Foreground message received:", payload);
-
-      if (Notification.permission === "granted") {
-        new Notification(payload.notification.title, {
-          body: payload.notification.body,
-          icon: "/icons/icon-192x192.png",
-        });
-      }
-    });
-
-    return () => unsubscribe();
-  }, [currentUser]);
 
   return (
     <Router>

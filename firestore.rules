@@ -25,11 +25,8 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if false;
 
-      // Per-user preferences and push-notification tokens
+      // Per-user preferences
       match /settings/{doc} {
-        allow read, write: if isOwner(uid);
-      }
-      match /tokens/{token} {
         allow read, write: if isOwner(uid);
       }
     }

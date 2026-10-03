@@ -5,19 +5,14 @@ import { AuthProvider } from "./context/AuthContext";
 import UpdateBanner from "./components/UpdateBanner";
 import "./index.css";
 
-// ✅ Service Worker Registration
+// The service worker only existed for push notifications, which were removed.
+// Clear it from devices that still have it registered. This can be deleted
+// once everyone has opened the app on this version.
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js") // register as classic script, not module
-      .then((registration) => {
-        console.log("🔧 Custom SW registered");
-        registration.update();
-      })
-      .catch((err) => {
-        console.error("❌ SW registration failed:", err);
-      });
-  });
+  navigator.serviceWorker
+    .getRegistrations()
+    .then((registrations) => registrations.forEach((r) => r.unregister()))
+    .catch(() => {});
 }
 
 // ✅ React Root Rendering

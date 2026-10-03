@@ -10,7 +10,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com).
 ### Planned
 - Multi-user collaboration features (assigning tasks, comments, etc.)
 - Admin panel for business use (M House)
-- Push notifications
 - Task history & activity log
 
 ---

@@ -80,12 +80,10 @@ function TaskControls({ task, taskRef, onUpdate }) {
     await updateDoc(taskRef, {
       timerStart: now,
       timerDuration: durationMs,
-      notified15min: false,
     });
     onUpdate({
       timerStart: now,
       timerDuration: durationMs,
-      notified15min: false,
     });
     setTimerError("");
   };

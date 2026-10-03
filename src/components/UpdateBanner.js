@@ -13,10 +13,9 @@ function runningBundle() {
 }
 
 // Shows "new version available" when the deployed index.html points at a
-// different bundle than the one running. The sw.js caches nothing, so a
-// service-worker update never fires for ordinary deploys - comparing bundle
-// hashes is what detects them. Checked on load, on a timer, and whenever the
-// installed app comes back to the foreground.
+// different bundle than the one running. There is no service worker to signal
+// a deploy, so comparing bundle hashes is how it is detected. Checked on load,
+// on a timer, and whenever the installed app comes back to the foreground.
 function UpdateBanner() {
   const running = useRef(runningBundle());
   const lastCheck = useRef(0);
