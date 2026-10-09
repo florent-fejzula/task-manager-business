@@ -1,26 +1,50 @@
 import { useState } from "react";
 
+// Firestore only confirms a save once the server has it, so a save that is
+// still pending after this long usually means the connection dropped
+const SLOW_SAVE_MS = 8000;
+
+function saveErrorMessage(err) {
+  if (err?.code === "permission-denied") {
+    return "Not saved: you don't have permission to add this task.";
+  }
+  if (err?.code === "unavailable" || !navigator.onLine) {
+    return "Not saved: no connection. Check your internet and try again.";
+  }
+  return `Not saved: ${err?.message || "something went wrong"}. Please try again.`;
+}
+
 function AddTaskForm({ onAdd, users = [], userData }) {
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("todo");
   const [assignedTo, setAssignedTo] = useState("");
   const [comment, setComment] = useState("");
   const [type, setType] = useState("one-time");
+  const [saving, setSaving] = useState(false);
+  const [slowSave, setSlowSave] = useState(false);
+  const [error, setError] = useState("");
 
-  // 🔁 Recurring fields
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [intervalDays, setIntervalDays] = useState(7);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    onAdd(title, status, assignedTo || null, comment.trim() || null, type);
-    setTitle("");
-    setStatus("todo");
-    setAssignedTo("");
-    setComment("");
-    setIsRecurring(false);
-    setIntervalDays(7);
+    if (saving || !title.trim()) return;
+
+    setSaving(true);
+    setError("");
+    const slowTimer = setTimeout(() => setSlowSave(true), SLOW_SAVE_MS);
+    try {
+      await onAdd(title, status, assignedTo || null, comment.trim() || null, type);
+      // Cleared only once it is really saved, so a failed save keeps what was typed
+      setTitle("");
+      setStatus("todo");
+      setAssignedTo("");
+      setComment("");
+    } catch (err) {
+      setError(saveErrorMessage(err));
+    } finally {
+      clearTimeout(slowTimer);
+      setSaving(false);
+      setSlowSave(false);
+    }
   };
 
   return (
@@ -90,40 +114,28 @@ function AddTaskForm({ onAdd, users = [], userData }) {
         </>
       )}
 
-      {/* 🔁 Recurring UI */}
-      {type === "one-time" && (
-      <div className="border p-3 rounded-md">
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={isRecurring}
-            onChange={(e) => setIsRecurring(e.target.checked)}
-          />
-          <span className="text-sm font-medium">Make this task recurring</span>
-        </label>
-
-        {isRecurring && (
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-sm">Every</span>
-            <input
-              type="number"
-              min="1"
-              className="w-20 border px-2 py-1 rounded text-sm"
-              value={intervalDays}
-              onChange={(e) => setIntervalDays(Number(e.target.value))}
-            />
-            <span className="text-sm">days</span>
-          </div>
-        )}
-      </div>
-      )}
-
       <button
         type="submit"
-        className="w-full bg-accent text-white py-2 rounded-md hover:bg-accent-dark transition"
+        disabled={saving}
+        className="w-full bg-accent text-white py-2 rounded-md hover:bg-accent-dark transition disabled:opacity-60 disabled:cursor-wait"
       >
-        Add Task
+        {saving ? "Saving..." : "Add Task"}
       </button>
+
+      {slowSave && (
+        <p role="status" className="text-sm text-amber-700">
+          Still saving... check your connection and keep the app open until
+          this finishes.
+        </p>
+      )}
+      {error && (
+        <p
+          role="alert"
+          className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2"
+        >
+          {error}
+        </p>
+      )}
     </form>
   );
 }

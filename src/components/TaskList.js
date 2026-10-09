@@ -34,7 +34,20 @@ function TaskList({
   const [loading, setLoading] = useState(true);
   const [userSettings, setUserSettings] = useState({});
   const [userList, setUserList] = useState([]);
+  const [notice, setNotice] = useState("");
   const userMap = Object.fromEntries(userList.map((u) => [u.uid, u.name]));
+
+  // Whose tasks this page shows; null for the manager's everyone-view
+  const viewUserId =
+    userData?.role === "manager"
+      ? overrideUserId || (filterToMyTasks ? currentUser.uid : null)
+      : currentUser.uid;
+
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = setTimeout(() => setNotice(""), 6000);
+    return () => clearTimeout(timer);
+  }, [notice]);
 
   const grouped = {
     todo: [],
@@ -69,21 +82,30 @@ function TaskList({
   ) => {
     // Fixed tasks are a standing list, so they never move through statuses
     const status = type === "fixed" ? "todo" : newTaskStatus;
+    const assignee = assignedTo || currentUser.uid;
+    let docRef;
     try {
-      const docRef = await addDoc(collection(db, "tasks"), {
+      docRef = await addDoc(collection(db, "tasks"), {
         title: newTaskTitle,
         status,
         type,
         priority: "medium",
         createdAt: serverTimestamp(),
         subTasks: [],
-        assignedTo: assignedTo || currentUser.uid,
+        assignedTo: assignee,
         createdBy: currentUser.uid,
         comment: comment || "", // add comment field here
       });
+    } catch (err) {
+      console.error("Error adding task:", err);
+      throw err; // AddTaskForm shows the error and keeps what was typed
+    }
 
-      console.log("🔥 Task added to Firestore with ID:", docRef.id);
+    console.log("🔥 Task added to Firestore with ID:", docRef.id);
 
+    // Only list it here if it belongs on this page (My Tasks or one
+    // employee's page only show that person's tasks)
+    if (!viewUserId || assignee === viewUserId) {
       setTasks((prev) => [
         {
           id: docRef.id,
@@ -92,17 +114,25 @@ function TaskList({
           type,
           priority: "medium",
           subTasks: [],
-          assignedTo: assignedTo || currentUser.uid,
+          assignedTo: assignee,
           createdBy: currentUser.uid,
           createdAt: new Date(),
           comment: comment || "", // add to local state too
         },
         ...prev,
       ]);
-      setShowAddTask(false);
-    } catch (err) {
-      console.error("Error adding task:", err);
     }
+    // A collapsed Fixed section would hide the task that was just added
+    if (type === "fixed") setShowFixed(true);
+
+    const forWhom =
+      assignee === currentUser.uid ? "you" : userMap[assignee] || "them";
+    setNotice(
+      `Task "${newTaskTitle}" added for ${forWhom}${
+        type === "fixed" ? " under Fixed tasks" : ""
+      }.`
+    );
+    setShowAddTask(false);
   };
 
   const sortedStatuses = ["in-progress", "todo", "on-hold", "done"];
@@ -215,9 +245,20 @@ function TaskList({
   return (
     <div>
       <div className="text-center mb-3">
+        {notice && (
+          <p
+            role="status"
+            className="mb-2 max-w-md mx-auto text-sm text-green-800 bg-green-50 border border-green-200 rounded-md px-3 py-2"
+          >
+            ✓ {notice}
+          </p>
+        )}
         {!showAddTask && (
           <button
-            onClick={() => setShowAddTask(true)}
+            onClick={() => {
+              setNotice("");
+              setShowAddTask(true);
+            }}
             className="text-sm text-accent underline"
           >
             + Add New Task
