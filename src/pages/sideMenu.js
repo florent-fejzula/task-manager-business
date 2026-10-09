@@ -67,7 +67,7 @@ function SideMenu() {
             >
               Settings
             </Link>
-            <Logout />
+            <Logout onLogout={() => setOpen(false)} />
           </nav>
         </div>
       </div>
