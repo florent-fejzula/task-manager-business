@@ -53,7 +53,11 @@ function SideMenu() {
             >
               Home
             </Link>
-            <Link to="/schedule" className="text-blue-600 hover:underline">
+            <Link
+              to="/schedule"
+              onClick={() => setOpen(false)}
+              className="text-blue-600 hover:underline"
+            >
               🗓️ Schedule
             </Link>
             <Link
